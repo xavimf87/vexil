@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Vexil</RootNamespace>
+    <PackageId>Vexil</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Vexil Platform</Authors>
+    <Description>C# SDK for Vexil - Kubernetes-native Feature Flags</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>feature-flags;kubernetes;vexil</PackageTags>
+  </PropertyGroup>
+
+</Project>

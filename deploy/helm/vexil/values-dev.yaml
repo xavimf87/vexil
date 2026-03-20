@@ -1,0 +1,22 @@
+# Development overrides for local Docker Desktop / kind / minikube
+# Usage: helm install vexil deploy/helm/vexil -n vexil-system --create-namespace -f deploy/helm/vexil/values-dev.yaml
+
+operator:
+  image:
+    tag: latest
+    pullPolicy: Never
+
+apiserver:
+  image:
+    tag: latest
+    pullPolicy: Never
+
+web:
+  image:
+    tag: latest
+    pullPolicy: Never
+  service:
+    type: NodePort
+
+auth:
+  adminPassword: admin

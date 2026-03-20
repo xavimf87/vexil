@@ -1,0 +1,328 @@
+{{- if .Values.crds.install }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: featureflags.vexil.io
+  labels:
+    {{- include "vexil.labels" . | nindent 4 }}
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+    {{- if .Values.crds.keep }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
+spec:
+  group: vexil.io
+  names:
+    kind: FeatureFlag
+    listKind: FeatureFlagList
+    plural: featureflags
+    singular: featureflag
+    shortNames:
+      - ff
+      - flag
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Type
+          type: string
+          jsonPath: .spec.type
+        - name: Default
+          type: string
+          jsonPath: .spec.defaultValue
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Targeted
+          type: integer
+          jsonPath: .status.targetedWorkloads
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: FeatureFlag is the Schema for the featureflags API.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required:
+                - type
+                - defaultValue
+              properties:
+                description:
+                  type: string
+                type:
+                  type: string
+                  enum: [boolean, string, integer, json]
+                defaultValue:
+                  type: string
+                disabled:
+                  type: boolean
+                owner:
+                  type: string
+                lifecycle:
+                  type: string
+                  default: active
+                  enum: [active, deprecated, archived]
+                rules:
+                  type: array
+                  items:
+                    type: object
+                    required: [name, conditions, value]
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                      percentage:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                      conditions:
+                        type: array
+                        items:
+                          type: object
+                          required: [attribute, operator, values]
+                          properties:
+                            attribute:
+                              type: string
+                            operator:
+                              type: string
+                              enum: [eq, neq, in, notin, matches]
+                            values:
+                              type: array
+                              items:
+                                type: string
+                delivery:
+                  type: object
+                  properties:
+                    envVar:
+                      type: object
+                      required: [selector]
+                      properties:
+                        name:
+                          type: string
+                        selector:
+                          type: object
+                          properties:
+                            matchLabels:
+                              type: object
+                              additionalProperties:
+                                type: string
+                            matchExpressions:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  key:
+                                    type: string
+                                  operator:
+                                    type: string
+                                  values:
+                                    type: array
+                                    items:
+                                      type: string
+                    configMap:
+                      type: object
+                      required: [configMapName, key, selector]
+                      properties:
+                        configMapName:
+                          type: string
+                        key:
+                          type: string
+                        selector:
+                          type: object
+                          properties:
+                            matchLabels:
+                              type: object
+                              additionalProperties:
+                                type: string
+                    sidecar:
+                      type: object
+                      required: [selector]
+                      properties:
+                        port:
+                          type: integer
+                          default: 8514
+                        selector:
+                          type: object
+                          properties:
+                            matchLabels:
+                              type: object
+                              additionalProperties:
+                                type: string
+                rollout:
+                  type: object
+                  required: [strategy]
+                  properties:
+                    strategy:
+                      type: string
+                      enum: [immediate, canary, linear]
+                    steps:
+                      type: array
+                      items:
+                        type: object
+                        required: [percentage, duration]
+                        properties:
+                          percentage:
+                            type: integer
+                            minimum: 0
+                            maximum: 100
+                          duration:
+                            type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                currentValue:
+                  type: string
+                rolloutProgress:
+                  type: integer
+                targetedWorkloads:
+                  type: integer
+                lastUpdated:
+                  type: string
+                  format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusterconnections.vexil.io
+  labels:
+    {{- include "vexil.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.crds.keep }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
+spec:
+  group: vexil.io
+  names:
+    kind: ClusterConnection
+    listKind: ClusterConnectionList
+    plural: clusterconnections
+    singular: clusterconnection
+    shortNames:
+      - cc
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Display Name
+          type: string
+          jsonPath: .spec.displayName
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Version
+          type: string
+          jsonPath: .status.kubernetesVersion
+        - name: Workloads
+          type: integer
+          jsonPath: .status.discoveredWorkloads
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: [displayName, authMethod, apiServer, credentialRef]
+              properties:
+                displayName:
+                  type: string
+                authMethod:
+                  type: string
+                  enum: [kubeconfig, serviceaccount, oidc]
+                apiServer:
+                  type: string
+                credentialRef:
+                  type: object
+                  required: [name, key]
+                  properties:
+                    name:
+                      type: string
+                    key:
+                      type: string
+                namespaces:
+                  type: array
+                  items:
+                    type: string
+                resyncPeriod:
+                  type: string
+                  default: "30s"
+                labels:
+                  type: object
+                  additionalProperties:
+                    type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                kubernetesVersion:
+                  type: string
+                lastProbe:
+                  type: string
+                  format: date-time
+                discoveredWorkloads:
+                  type: integer
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+{{- end }}

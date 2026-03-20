@@ -1,0 +1,28 @@
+# Go
+bin/
+cover.out
+*.exe
+*.test
+/apiserver
+/operator
+
+# Node
+web/node_modules/
+web/.next/
+web/out/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+
+# Kubernetes
+*.kubeconfig

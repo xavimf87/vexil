@@ -1,0 +1,23 @@
+apiVersion: v2
+name: vexil
+description: Kubernetes-native Feature Flags Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.26.0-0"
+keywords:
+  - feature-flags
+  - kubernetes
+  - operator
+  - platform-engineering
+  - feature-management
+home: https://github.com/vexil-platform/vexil
+sources:
+  - https://github.com/vexil-platform/vexil
+maintainers:
+  - name: Vexil Platform
+    url: https://github.com/vexil-platform
+icon: https://raw.githubusercontent.com/vexil-platform/vexil/main/docs/logo.svg
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: integration-delivery

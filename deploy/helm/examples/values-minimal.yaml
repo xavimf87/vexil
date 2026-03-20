@@ -1,0 +1,24 @@
+# Minimal installation - operator only, no web portal
+# Useful for spoke clusters in hub-spoke model
+# helm install vexil deploy/helm/vexil -n vexil-system --create-namespace -f deploy/helm/examples/values-minimal.yaml
+
+operator:
+  enabled: true
+  replicas: 1
+  leaderElect: false
+
+apiserver:
+  enabled: false
+
+web:
+  enabled: false
+
+postgresql:
+  enabled: false
+
+crds:
+  install: true
+  keep: true
+
+metrics:
+  enabled: false

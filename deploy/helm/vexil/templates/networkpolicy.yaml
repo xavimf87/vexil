@@ -1,0 +1,118 @@
+{{- if .Values.networkPolicy.enabled }}
+# Operator: only needs egress to K8s API and metrics
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "vexil.fullname" . }}-operator
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.operator.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "vexil.operator.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Prometheus scraping
+    - ports:
+        - port: 8080
+          protocol: TCP
+    # Health probes
+    - ports:
+        - port: 8081
+          protocol: TCP
+  egress:
+    # K8s API
+    - ports:
+        - port: 443
+          protocol: TCP
+        - port: 6443
+          protocol: TCP
+    # DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+# API Server: ingress from web and external, egress to K8s API and PostgreSQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "vexil.fullname" . }}-apiserver
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.apiserver.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "vexil.apiserver.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: {{ .Values.apiserver.port }}
+          protocol: TCP
+      from:
+        # From web portal
+        - podSelector:
+            matchLabels:
+              {{- include "vexil.web.selectorLabels" . | nindent 14 }}
+        # From ingress controller
+        - namespaceSelector: {}
+  egress:
+    # K8s API
+    - ports:
+        - port: 443
+          protocol: TCP
+        - port: 6443
+          protocol: TCP
+    # PostgreSQL
+    - ports:
+        - port: 5432
+          protocol: TCP
+    # DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+---
+# Web: ingress from external, egress to API server only
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "vexil.fullname" . }}-web
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.web.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "vexil.web.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: {{ .Values.web.port }}
+          protocol: TCP
+  egress:
+    # API server
+    - ports:
+        - port: {{ .Values.apiserver.port }}
+          protocol: TCP
+      to:
+        - podSelector:
+            matchLabels:
+              {{- include "vexil.apiserver.selectorLabels" . | nindent 14 }}
+    # DNS
+    - ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+{{- end }}

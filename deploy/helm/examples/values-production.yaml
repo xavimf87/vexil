@@ -1,0 +1,124 @@
+# Production values example
+# helm install vexil deploy/helm/vexil -n vexil-system --create-namespace -f deploy/helm/examples/values-production.yaml
+
+global:
+  imagePullSecrets:
+    - name: ghcr-credentials
+
+operator:
+  enabled: true
+  replicas: 2
+  leaderElect: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 200m
+      memory: 128Mi
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - operator
+            topologyKey: kubernetes.io/hostname
+
+apiserver:
+  enabled: true
+  replicas: 2
+  corsOrigins: "https://vexil.example.com"
+  resources:
+    limits:
+      cpu: "1"
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - apiserver
+            topologyKey: kubernetes.io/hostname
+
+web:
+  enabled: true
+  replicas: 2
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  hosts:
+    - host: vexil.example.com
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: apiserver
+        - path: /
+          pathType: Prefix
+          service: web
+  tls:
+    - secretName: vexil-tls
+      hosts:
+        - vexil.example.com
+
+postgresql:
+  enabled: true
+  auth:
+    existingSecret: vexil-postgres-credentials
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: gp3
+    resources:
+      limits:
+        cpu: "1"
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+crds:
+  install: true
+  keep: true
+
+metrics:
+  enabled: true
+  interval: 15s
+  labels:
+    release: prometheus
+
+networkPolicy:
+  enabled: true
+
+podDisruptionBudget:
+  operator:
+    enabled: true
+    minAvailable: 1
+  apiserver:
+    enabled: true
+    minAvailable: 1

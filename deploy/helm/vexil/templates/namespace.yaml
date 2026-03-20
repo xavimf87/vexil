@@ -1,0 +1,8 @@
+{{- if .Values.global.namespaceOverride }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.labels" . | nindent 4 }}
+{{- end }}

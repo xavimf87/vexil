@@ -1,0 +1,29 @@
+{{- if .Values.podDisruptionBudget.operator.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "vexil.fullname" . }}-operator
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.operator.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.operator.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "vexil.operator.selectorLabels" . | nindent 6 }}
+{{- end }}
+---
+{{- if .Values.podDisruptionBudget.apiserver.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "vexil.fullname" . }}-apiserver
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.apiserver.labels" . | nindent 4 }}
+spec:
+  minAvailable: {{ .Values.podDisruptionBudget.apiserver.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "vexil.apiserver.selectorLabels" . | nindent 6 }}
+{{- end }}

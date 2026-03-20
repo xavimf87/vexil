@@ -1,0 +1,128 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: default
+  labels:
+    app: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+        - name: app
+          image: vexil-demo:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: VEXIL_CONFIG_PATH
+              value: "/etc/vexil"
+          volumeMounts:
+            - name: flags
+              mountPath: /etc/vexil
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+      volumes:
+        - name: flags
+          configMap:
+            name: vexil-flags
+            optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: demo
+---
+# Feature flags targeting the demo app
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: dark-mode
+  namespace: default
+spec:
+  description: "Enable dark mode for the UI"
+  type: boolean
+  defaultValue: "false"
+  owner: "frontend-team"
+  delivery:
+    envVar:
+      name: FEATURE_DARK_MODE
+      selector:
+        matchLabels:
+          app: demo
+---
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: api-rate-limit
+  namespace: default
+spec:
+  description: "API rate limit per user per minute"
+  type: integer
+  defaultValue: "100"
+  owner: "platform-team"
+  delivery:
+    configMap:
+      configMapName: vexil-flags
+      key: api-rate-limit
+      selector:
+        matchLabels:
+          app: demo
+---
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: new-checkout
+  namespace: default
+spec:
+  description: "New checkout flow"
+  type: boolean
+  defaultValue: "false"
+  owner: "product-team"
+  delivery:
+    envVar:
+      selector:
+        matchLabels:
+          app: demo
+---
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: banner-text
+  namespace: default
+spec:
+  description: "Promotional banner text"
+  type: string
+  defaultValue: "Welcome to Vexil!"
+  owner: "marketing"
+  delivery:
+    configMap:
+      configMapName: vexil-flags
+      key: banner-text
+      selector:
+        matchLabels:
+          app: demo

@@ -1,0 +1,54 @@
+
+=================================================================
+  Vexil - Kubernetes-native Feature Flags Platform v{{ .Chart.AppVersion }}
+=================================================================
+
+{{- if .Values.web.enabled }}
+
+Portal URL:
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  https://{{ .host }}
+{{- end }}
+{{- else }}
+  kubectl port-forward svc/{{ include "vexil.fullname" . }}-web {{ .Values.web.service.port }}:{{ .Values.web.service.port }} -n {{ include "vexil.namespace" . }}
+  Then open: http://localhost:{{ .Values.web.service.port }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.apiserver.enabled }}
+
+API Server:
+  kubectl port-forward svc/{{ include "vexil.fullname" . }}-apiserver {{ .Values.apiserver.service.port }}:{{ .Values.apiserver.service.port }} -n {{ include "vexil.namespace" . }}
+  curl http://localhost:{{ .Values.apiserver.service.port }}/healthz
+{{- end }}
+
+Quick Start:
+  1. Create your first feature flag:
+
+     cat <<EOF | kubectl apply -f -
+     apiVersion: vexil.io/v1alpha1
+     kind: FeatureFlag
+     metadata:
+       name: dark-mode
+       namespace: default
+     spec:
+       type: boolean
+       defaultValue: "false"
+       description: "Enable dark mode"
+       delivery:
+         envVar:
+           selector:
+             matchLabels:
+               app: my-app
+     EOF
+
+  2. List feature flags:
+     kubectl get featureflags -A
+     kubectl get ff -A  # short name
+
+  3. Toggle a flag:
+     kubectl patch featureflag dark-mode -p '{"spec":{"defaultValue":"true"}}' --type=merge
+
+Documentation: https://github.com/vexil-platform/vexil
+

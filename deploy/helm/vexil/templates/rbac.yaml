@@ -1,0 +1,72 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "vexil.fullname" . }}
+  labels:
+    {{- include "vexil.labels" . | nindent 4 }}
+rules:
+  # FeatureFlag CRD
+  - apiGroups: ["vexil.io"]
+    resources: ["featureflags"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["vexil.io"]
+    resources: ["featureflags/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["vexil.io"]
+    resources: ["featureflags/finalizers"]
+    verbs: ["update"]
+  # ClusterConnection CRD
+  - apiGroups: ["vexil.io"]
+    resources: ["clusterconnections"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["vexil.io"]
+    resources: ["clusterconnections/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["vexil.io"]
+    resources: ["clusterconnections/finalizers"]
+    verbs: ["update"]
+  # Workload discovery
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  # Pod mutation (sidecar injection)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  # ConfigMap management
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  # Namespace listing for discovery
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch"]
+  # Secrets for cluster credentials (read-only)
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  # Leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "vexil.fullname" . }}
+  labels:
+    {{- include "vexil.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "vexil.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "vexil.serviceAccountName" . }}
+    namespace: {{ include "vexil.namespace" . }}
+{{- end }}

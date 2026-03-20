@@ -1,0 +1,28 @@
+# Minimal values for CI/chart testing
+operator:
+  enabled: true
+  replicas: 1
+  leaderElect: false
+
+apiserver:
+  enabled: true
+  replicas: 1
+
+web:
+  enabled: true
+  replicas: 1
+
+postgresql:
+  enabled: true
+  auth:
+    password: test-password
+
+crds:
+  install: true
+  keep: false
+
+metrics:
+  enabled: false
+
+networkPolicy:
+  enabled: false

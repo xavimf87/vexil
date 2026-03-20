@@ -1,0 +1,100 @@
+# Development values for Docker Desktop Kubernetes
+# helm install vexil deploy/helm/vexil -n vexil-system --create-namespace -f deploy/helm/examples/values-docker-desktop.yaml
+
+operator:
+  enabled: true
+  replicas: 1
+  leaderElect: false
+  image:
+    repository: vexil-operator
+    tag: latest
+    pullPolicy: Never  # Use local images built with docker build
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+apiserver:
+  enabled: true
+  replicas: 1
+  image:
+    repository: vexil-apiserver
+    tag: latest
+    pullPolicy: Never
+  corsOrigins: "*"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  service:
+    type: NodePort
+    port: 8090
+    annotations: {}
+
+web:
+  enabled: true
+  replicas: 1
+  image:
+    repository: vexil-web
+    tag: latest
+    pullPolicy: Never
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  service:
+    type: NodePort
+    port: 3000
+    annotations: {}
+
+ingress:
+  enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    database: vexil
+    username: vexil
+    password: vexil-dev
+  primary:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+crds:
+  install: true
+  keep: true
+
+metrics:
+  enabled: false
+
+networkPolicy:
+  enabled: false
+
+podDisruptionBudget:
+  operator:
+    enabled: false
+  apiserver:
+    enabled: false

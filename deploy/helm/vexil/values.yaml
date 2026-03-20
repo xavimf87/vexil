@@ -1,0 +1,284 @@
+# -- Global settings
+global:
+  # -- Image pull secrets for all components
+  imagePullSecrets: []
+  # -- Override the namespace for all resources
+  # @default -- Release namespace
+  namespaceOverride: ""
+
+# -- Authentication configuration
+auth:
+  # -- Enable authentication
+  enabled: true
+  # -- Admin username
+  adminUser: "admin"
+  # -- Admin password. If empty, a random password is generated on first install
+  # The generated password is stored in the vexil-admin secret
+  adminPassword: ""
+
+# -- Operator configuration
+operator:
+  # -- Enable the operator component
+  enabled: true
+  image:
+    repository: ghcr.io/vexil-platform/operator
+    tag: ""  # defaults to Chart.appVersion
+    pullPolicy: IfNotPresent
+  replicas: 1
+  # -- Enable leader election (required for HA)
+  leaderElect: true
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
+  # -- Node selector for operator pods
+  nodeSelector: {}
+  # -- Tolerations for operator pods
+  tolerations: []
+  # -- Affinity for operator pods
+  affinity: {}
+  # -- Additional environment variables
+  extraEnv: []
+  # -- Pod annotations
+  podAnnotations: {}
+  # -- Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  # -- Container security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+# -- API Server configuration
+apiserver:
+  # -- Enable the API server component
+  enabled: true
+  image:
+    repository: ghcr.io/vexil-platform/apiserver
+    tag: ""  # defaults to Chart.appVersion
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8090
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # -- Allowed CORS origins (comma-separated)
+  corsOrigins: "*"
+  # -- Database URL for audit logs and state
+  # If postgresql.enabled is true, this is auto-configured
+  databaseURL: ""
+  # -- Node selector
+  nodeSelector: {}
+  # -- Tolerations
+  tolerations: []
+  # -- Affinity
+  affinity: {}
+  # -- Additional environment variables
+  extraEnv: []
+  # -- Pod annotations
+  podAnnotations: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  service:
+    type: ClusterIP
+    port: 8090
+    annotations: {}
+
+# -- Web Portal configuration
+web:
+  # -- Enable the web portal component
+  enabled: true
+  image:
+    repository: ghcr.io/vexil-platform/web
+    tag: ""  # defaults to Chart.appVersion
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 3000
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  # -- Node selector
+  nodeSelector: {}
+  # -- Tolerations
+  tolerations: []
+  # -- Affinity
+  affinity: {}
+  # -- Additional environment variables
+  extraEnv: []
+  # -- Pod annotations
+  podAnnotations: {}
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false  # Next.js needs write access to .next/cache
+    runAsUser: 1001
+    runAsGroup: 1001
+    capabilities:
+      drop:
+        - ALL
+  service:
+    type: ClusterIP
+    port: 3000
+    annotations: {}
+
+# -- Ingress configuration
+ingress:
+  # -- Enable ingress
+  enabled: false
+  # -- Ingress class name
+  className: ""
+  # -- Ingress annotations
+  annotations: {}
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  # -- Ingress hosts
+  hosts:
+    - host: vexil.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: web
+        - path: /api
+          pathType: Prefix
+          service: apiserver
+  # -- TLS configuration
+  tls: []
+  #  - secretName: vexil-tls
+  #    hosts:
+  #      - vexil.example.com
+
+# -- PostgreSQL subchart configuration
+postgresql:
+  # -- Deploy PostgreSQL as a subchart
+  enabled: true
+  auth:
+    database: vexil
+    username: vexil
+    # -- Password for the vexil user. Use existingSecret in production
+    password: ""
+    # -- Name of an existing secret with the password key 'password'
+    existingSecret: ""
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    initdb:
+      scripts:
+        init.sql: |
+          CREATE TABLE IF NOT EXISTS audit_events (
+              id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              timestamp   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              actor       TEXT NOT NULL DEFAULT 'system',
+              action      TEXT NOT NULL,
+              resource    TEXT NOT NULL,
+              resource_id TEXT NOT NULL,
+              cluster     TEXT,
+              diff        JSONB,
+              metadata    JSONB,
+              created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          );
+          CREATE INDEX IF NOT EXISTS idx_audit_events_timestamp ON audit_events (timestamp DESC);
+          CREATE INDEX IF NOT EXISTS idx_audit_events_resource ON audit_events (resource, resource_id);
+          CREATE INDEX IF NOT EXISTS idx_audit_events_cluster ON audit_events (cluster);
+          CREATE INDEX IF NOT EXISTS idx_audit_events_action ON audit_events (action);
+
+          CREATE TABLE IF NOT EXISTS users (
+              id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              email       TEXT UNIQUE NOT NULL,
+              name        TEXT,
+              role        TEXT NOT NULL DEFAULT 'viewer',
+              created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              last_login  TIMESTAMPTZ
+          );
+
+          CREATE TABLE IF NOT EXISTS cluster_cache (
+              cluster_id   TEXT PRIMARY KEY,
+              display_name TEXT,
+              status       TEXT,
+              version      TEXT,
+              workloads    JSONB,
+              updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          );
+
+          INSERT INTO users (email, name, role) VALUES ('admin@vexil.io', 'Admin', 'admin')
+          ON CONFLICT DO NOTHING;
+
+# -- ServiceAccount configuration
+serviceAccount:
+  # -- Create the service account
+  create: true
+  # -- Service account name
+  name: ""
+  # -- Annotations for the service account
+  annotations: {}
+
+# -- RBAC configuration
+rbac:
+  # -- Create ClusterRole and ClusterRoleBinding
+  create: true
+
+# -- CRDs
+crds:
+  # -- Install CRDs with the chart
+  install: true
+  # -- Keep CRDs on chart uninstall
+  keep: true
+
+# -- ServiceMonitor for Prometheus Operator
+metrics:
+  # -- Enable ServiceMonitor
+  enabled: false
+  # -- ServiceMonitor interval
+  interval: 30s
+  # -- Additional labels for ServiceMonitor
+  labels: {}
+
+# -- Network policies
+networkPolicy:
+  # -- Enable network policies
+  enabled: false
+
+# -- Pod disruption budget
+podDisruptionBudget:
+  # -- Enable PDB for operator
+  operator:
+    enabled: false
+    minAvailable: 1
+  # -- Enable PDB for apiserver
+  apiserver:
+    enabled: false
+    minAvailable: 1

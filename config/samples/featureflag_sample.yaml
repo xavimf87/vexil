@@ -1,0 +1,74 @@
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: dark-mode
+  namespace: default
+spec:
+  description: "Enable dark mode for the frontend application"
+  type: boolean
+  defaultValue: "false"
+  owner: "frontend-team"
+  delivery:
+    envVar:
+      name: FEATURE_DARK_MODE
+      selector:
+        matchLabels:
+          app: frontend
+---
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: api-rate-limit
+  namespace: default
+spec:
+  description: "API rate limit per user per minute"
+  type: integer
+  defaultValue: "100"
+  owner: "platform-team"
+  delivery:
+    configMap:
+      configMapName: vexil-flags
+      key: api-rate-limit
+      selector:
+        matchLabels:
+          app: api-gateway
+  rules:
+    - name: premium-users
+      conditions:
+        - attribute: "label:tier"
+          operator: eq
+          values: ["premium"]
+      value: "1000"
+    - name: staging-unlimited
+      conditions:
+        - attribute: namespace
+          operator: eq
+          values: ["staging"]
+      value: "999999"
+---
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: new-checkout-flow
+  namespace: default
+spec:
+  description: "New checkout flow with improved UX"
+  type: boolean
+  defaultValue: "false"
+  owner: "product-team"
+  delivery:
+    envVar:
+      selector:
+        matchLabels:
+          app: checkout-service
+  rollout:
+    strategy: canary
+    steps:
+      - percentage: 10
+        duration: "1h"
+      - percentage: 25
+        duration: "2h"
+      - percentage: 50
+        duration: "4h"
+      - percentage: 100
+        duration: "0s"

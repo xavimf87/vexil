@@ -1,0 +1,37 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "vexil.fullname" . }}-operator
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.operator.labels" . | nindent 4 }}
+    {{- with .Values.metrics.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "vexil.operator.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      interval: {{ .Values.metrics.interval }}
+      path: /metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vexil.fullname" . }}-operator-metrics
+  namespace: {{ include "vexil.namespace" . }}
+  labels:
+    {{- include "vexil.operator.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "vexil.operator.selectorLabels" . | nindent 4 }}
+{{- end }}

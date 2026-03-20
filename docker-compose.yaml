@@ -1,0 +1,51 @@
+services:
+  # PostgreSQL for audit logs, sessions, and portal state
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vexil
+      POSTGRES_USER: vexil
+      POSTGRES_PASSWORD: vexil-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vexil"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Vexil API Server
+  apiserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.apiserver
+    ports:
+      - "8090:8090"
+    environment:
+      - VEXIL_PORT=8090
+      - VEXIL_CORS_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost
+      - VEXIL_DATABASE_URL=postgres://vexil:vexil-dev@postgres:5432/vexil?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Vexil Web Portal
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "3001:3000"
+    environment:
+      - VEXIL_API_URL=http://apiserver:8090
+      - NEXT_PUBLIC_API_URL=http://localhost:8090/api/v1
+    depends_on:
+      - apiserver
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

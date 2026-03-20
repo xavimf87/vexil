@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 231 48% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 216 34% 17%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --ring: 231 48% 56%;
+    --radius: 0.75rem;
+  }
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(51 65 85) transparent;
+}
+
+body {
+  @apply bg-slate-950 text-slate-200 antialiased;
+}
+
+/* Glassmorphism card */
+.glass {
+  @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] shadow-xl;
+}
+
+.glass-hover:hover {
+  @apply bg-white/[0.06] border-white/[0.1];
+}
+
+/* Glow effects */
+.glow-sm {
+  box-shadow: 0 0 15px -3px rgba(99, 102, 241, 0.15);
+}
+
+.glow-md {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.2);
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent;
+}
+
+/* Subtle grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  @apply transition-all duration-200 ease-out;
+}
+
+/* Input focus styles */
+input, select, textarea {
+  @apply bg-slate-900 border-slate-700 text-slate-200 placeholder-slate-500;
+}
+input:focus, select:focus, textarea:focus {
+  @apply outline-none ring-2 ring-indigo-500/40 border-indigo-500/40;
+}
+
+/* Fix dropdown/select option colors for all browsers */
+select {
+  @apply bg-slate-900 text-slate-200;
+}
+option {
+  @apply bg-slate-900 text-slate-200;
+}
+option:checked {
+  @apply bg-indigo-600 text-white;
+}
+option:hover {
+  background-color: rgb(51 65 85) !important;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  @apply bg-slate-800 border-slate-600 accent-indigo-500;
+}

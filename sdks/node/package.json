@@ -1,0 +1,17 @@
+{
+  "name": "vexil",
+  "version": "0.1.0",
+  "description": "Node.js SDK for Vexil - Kubernetes-native Feature Flags",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "files": ["dist"],
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
