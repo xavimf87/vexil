@@ -25,14 +25,14 @@ export default function SettingsPage() {
         <p className="mt-1 text-sm text-slate-400">Configure your Vexil platform</p>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 md:flex-row">
         {/* Tabs */}
-        <div className="w-48 space-y-1">
+        <div className="flex gap-1 overflow-x-auto pb-2 md:w-48 md:flex-col md:overflow-visible md:pb-0">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-smooth ${
+              className={`flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-smooth md:w-full ${
                 activeTab === tab.id
                   ? 'bg-indigo-500/10 text-indigo-400'
                   : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
@@ -279,7 +279,7 @@ function UsersPanel() {
       {showCreate && (
         <form onSubmit={handleCreate} className="rounded-lg border border-indigo-500/10 bg-indigo-500/[0.03] p-4 space-y-3">
           <p className="text-xs font-medium text-indigo-400 mb-3">Create new user</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Username</label>
               <input
@@ -343,7 +343,7 @@ function UsersPanel() {
       ) : users && users.length > 0 ? (
         <div className="rounded-lg border border-white/[0.06] overflow-hidden">
           {/* Table header */}
-          <div className="grid grid-cols-[1fr_100px_1fr_100px] gap-4 border-b border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+          <div className="hidden md:grid grid-cols-[1fr_100px_1fr_100px] gap-4 border-b border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Username</span>
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Role</span>
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Created</span>
@@ -353,7 +353,7 @@ function UsersPanel() {
           {/* Rows */}
           {users.map((u) => (
             <div key={u.username}>
-              <div className="grid grid-cols-[1fr_100px_1fr_100px] gap-4 items-center px-4 py-3 border-b border-white/[0.04] last:border-0">
+              <div className="flex flex-col gap-2 px-4 py-3 border-b border-white/[0.04] last:border-0 md:grid md:grid-cols-[1fr_100px_1fr_100px] md:gap-4 md:items-center">
                 <span className="text-sm text-slate-200 font-medium">{u.username}</span>
                 <span>
                   <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${roleBadgeColors[u.role] || roleBadgeColors.viewer}`}>
@@ -397,7 +397,7 @@ function UsersPanel() {
               {/* Edit form (inline) */}
               {editingUser === u.username && (
                 <div className="border-b border-white/[0.04] bg-white/[0.02] px-4 py-3">
-                  <div className="flex items-end gap-3">
+                  <div className="flex flex-wrap items-end gap-3">
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-slate-400 mb-1.5">New password</label>
                       <input

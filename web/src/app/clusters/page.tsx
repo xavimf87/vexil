@@ -36,7 +36,7 @@ export default function ClustersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Clusters</h1>
           <p className="text-sm text-slate-400 mt-1">{clusters?.length || 0} connected clusters</p>
@@ -60,7 +60,7 @@ export default function ClustersPage() {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <form onSubmit={(e) => { e.preventDefault(); registerMutation.mutate() }} className="grid grid-cols-2 gap-4">
+          <form onSubmit={(e) => { e.preventDefault(); registerMutation.mutate() }} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Cluster ID</label>
               <input type="text" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })}
@@ -73,13 +73,13 @@ export default function ClustersPage() {
                 placeholder="Production EU"
                 className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-sm" required />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-400 mb-1.5">API Server URL</label>
               <input type="text" value={form.apiServer} onChange={(e) => setForm({ ...form, apiServer: e.target.value })}
                 placeholder="https://k8s-api.example.com:6443"
                 className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-sm" />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Kubeconfig (YAML)</label>
               <textarea value={form.kubeconfig} onChange={(e) => setForm({ ...form, kubeconfig: e.target.value })}
                 rows={5} placeholder="Paste your kubeconfig YAML here..."

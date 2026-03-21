@@ -2,7 +2,12 @@ IMG_OPERATOR ?= ghcr.io/vexil-platform/operator:latest
 IMG_APISERVER ?= ghcr.io/vexil-platform/apiserver:latest
 IMG_WEB ?= ghcr.io/vexil-platform/web:latest
 
-.PHONY: all build test lint fmt vet operator apiserver web install uninstall docker-build docker-push run-operator run-apiserver run-web
+# Local image names (used with Docker Desktop / kind / minikube)
+IMG_OPERATOR_LOCAL ?= vexil-operator:latest
+IMG_APISERVER_LOCAL ?= vexil-apiserver:latest
+IMG_WEB_LOCAL ?= vexil-web:latest
+
+.PHONY: all build test lint fmt vet operator apiserver web install uninstall docker-build docker-build-local docker-push run-operator run-apiserver run-web
 
 all: build
 
@@ -56,10 +61,15 @@ sample: ## Apply sample FeatureFlags
 
 ##@ Docker
 
-docker-build: ## Build all Docker images
+docker-build: ## Build all Docker images (registry tags)
 	docker build -f Dockerfile.operator -t $(IMG_OPERATOR) .
 	docker build -f Dockerfile.apiserver -t $(IMG_APISERVER) .
 	docker build -f Dockerfile.web -t $(IMG_WEB) .
+
+docker-build-local: ## Build images with local tags for Docker Desktop
+	docker build -f Dockerfile.operator -t $(IMG_OPERATOR_LOCAL) .
+	docker build -f Dockerfile.apiserver -t $(IMG_APISERVER_LOCAL) .
+	docker build -f Dockerfile.web -t $(IMG_WEB_LOCAL) .
 
 docker-push:
 	docker push $(IMG_OPERATOR)
@@ -78,8 +88,8 @@ helm-upgrade: ## Upgrade Helm chart
 helm-uninstall:
 	helm uninstall vexil -n vexil-system
 
-redeploy: docker-build ## Build all images and redeploy via Helm
-	helm upgrade vexil deploy/helm/vexil -n vexil-system -f $(HELM_VALUES) --force-conflicts
+redeploy: docker-build-local ## Build local images and redeploy via Helm
+	helm upgrade vexil deploy/helm/vexil -n vexil-system -f $(HELM_VALUES)
 	kubectl rollout restart deployment -n vexil-system -l app.kubernetes.io/part-of=vexil
 
 ##@ Cleanup

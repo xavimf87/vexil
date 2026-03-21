@@ -1,22 +1,33 @@
 # Development overrides for local Docker Desktop / kind / minikube
-# Usage: helm install vexil deploy/helm/vexil -n vexil-system --create-namespace -f deploy/helm/vexil/values-dev.yaml
+# Usage:
+#   make docker-build-local    # Build images with local tags
+#   make helm-install           # Install chart with these dev values
 
 operator:
   image:
+    repository: vexil-operator
     tag: latest
     pullPolicy: Never
 
 apiserver:
   image:
+    repository: vexil-apiserver
     tag: latest
     pullPolicy: Never
+  corsOrigins: "http://localhost:3000,http://localhost:30000,http://localhost"
 
 web:
   image:
+    repository: vexil-web
     tag: latest
     pullPolicy: Never
   service:
     type: NodePort
+    nodePort: 30000
 
 auth:
   adminPassword: admin
+
+postgresql:
+  auth:
+    password: vexil-dev

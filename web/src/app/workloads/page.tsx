@@ -52,7 +52,7 @@ export default function WorkloadsPage() {
         <p className="text-sm text-slate-400 mt-1">Discover applications and their configuration</p>
       </div>
 
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex flex-wrap items-center gap-3 mb-6">
         <select value={selectedCluster}
           onChange={(e) => { setSelectedCluster(e.target.value); setSelectedNamespace(''); setExpandedWorkload(null) }}
           className="rounded-lg border border-white/[0.06] bg-slate-900 px-3 py-2.5 text-sm min-w-[200px]">

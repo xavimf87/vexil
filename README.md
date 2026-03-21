@@ -29,7 +29,7 @@ An optional **sidecar** can be injected into pods to expose flags over a local H
 
 | Component | Version |
 |-----------|---------|
-| Go | 1.25+ |
+| Go | 1.24+ |
 | Node.js | 20+ |
 | Kubernetes | 1.26+ |
 | Helm | 3.x |
@@ -37,9 +37,44 @@ An optional **sidecar** can be injected into pods to expose flags over a local H
 
 ## Quick Start (Local Development)
 
-### 1. Run with Docker Compose
+### 1. Docker Desktop Kubernetes (recommended)
 
-The fastest way to get a local instance running (no Kubernetes required for the dashboard and API):
+The full platform running on your local Kubernetes cluster:
+
+```bash
+# Ensure docker-desktop context is active
+kubectl config use-context docker-desktop
+
+# Build images locally (tagged for local use, no registry push needed)
+make docker-build-local
+
+# Deploy with Helm using dev values
+make helm-install
+```
+
+This deploys all components to the `vexil-system` namespace:
+- PostgreSQL (internal, ClusterIP)
+- API Server (internal, ClusterIP on port 8090)
+- Operator (watches CRDs and reconciles workloads)
+- Web Dashboard on `localhost:30000` (NodePort)
+
+Login with `admin` / `admin`.
+
+After code changes, rebuild and redeploy:
+
+```bash
+make redeploy
+```
+
+To tear down:
+
+```bash
+make helm-uninstall
+```
+
+### 2. Docker Compose (no Kubernetes)
+
+Run the dashboard and API without Kubernetes (operator features disabled):
 
 ```bash
 docker compose up --build
@@ -50,7 +85,7 @@ This starts:
 - API Server on `localhost:8090`
 - Web Dashboard on `localhost:3001`
 
-### 2. Run from source
+### 3. Run from source
 
 Start each component separately:
 

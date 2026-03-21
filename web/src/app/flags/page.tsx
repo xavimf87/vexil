@@ -55,7 +55,7 @@ export default function FlagsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Feature Flags</h1>
           <p className="text-sm text-slate-400 mt-1">
@@ -74,8 +74,8 @@ export default function FlagsPage() {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative w-full sm:flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <input
             type="text"
@@ -150,8 +150,8 @@ export default function FlagsPage() {
           {hasFilters && (
             <p className="mb-3 text-xs text-slate-500">{filteredFlags.length} of {flags.length} flags</p>
           )}
-          <div className="glass rounded-xl overflow-hidden">
-            <table className="w-full">
+          <div className="glass rounded-xl overflow-x-auto">
+            <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="border-b border-white/[0.06]">
                   <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Flag</th>

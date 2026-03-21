@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS cluster_cache;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS audit_events;

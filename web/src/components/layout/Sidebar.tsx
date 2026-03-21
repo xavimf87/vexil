@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Flag, Server, Boxes, ScrollText, Settings, LayoutDashboard, Search, X, LogOut } from 'lucide-react'
+import { Flag, Server, Boxes, ScrollText, Settings, LayoutDashboard, Search, X, LogOut, Menu } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/lib/auth'
 import { authApi } from '@/lib/api-client'
@@ -23,6 +23,7 @@ export function Sidebar() {
   const { user, token, logout } = useAuth()
   const [searchOpen, setSearchOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [mobileOpen, setMobileOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   async function handleLogout() {
@@ -68,84 +69,129 @@ export function Sidebar() {
     if (searchOpen) inputRef.current?.focus()
   }, [searchOpen])
 
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
   function handleSelect(href: string) {
     router.push(href)
     closeSearch()
   }
 
-  return (
+  const sidebarContent = (
     <>
-      <aside className="flex w-[260px] flex-col border-r border-white/[0.06] bg-slate-950">
-        {/* Logo */}
-        <div className="flex h-16 items-center gap-3 px-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-600/20">
-            <Flag className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <span className="text-lg font-bold text-white">Vexil</span>
-            <span className="ml-1.5 rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400">BETA</span>
-          </div>
+      {/* Logo */}
+      <div className="flex h-16 items-center gap-3 px-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 shadow-lg shadow-indigo-600/20">
+          <Flag className="h-5 w-5 text-white" />
         </div>
+        <div>
+          <span className="text-lg font-bold text-white">Vexil</span>
+          <span className="ml-1.5 rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400">BETA</span>
+        </div>
+        {/* Close button on mobile */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="ml-auto rounded-md p-1.5 text-slate-500 hover:text-slate-300 md:hidden"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-        {/* Search trigger */}
-        <div className="px-4 mb-2">
+      {/* Search trigger */}
+      <div className="px-4 mb-2">
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="w-full flex items-center gap-2 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2 text-sm text-slate-500 hover:bg-white/[0.05] hover:border-white/[0.1] transition-smooth"
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left text-xs">Search...</span>
+          <kbd className="hidden sm:inline rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400">Ctrl+K</kbd>
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-0.5 px-3 py-2">
+        <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Platform</p>
+        {navigation.map((item) => {
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-smooth',
+                isActive
+                  ? 'bg-indigo-500/10 text-indigo-400 shadow-sm shadow-indigo-500/5'
+                  : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+              )}
+            >
+              <item.icon className={cn('h-[18px] w-[18px]', isActive && 'text-indigo-400')} />
+              {item.name}
+              {item.name === 'Feature Flags' && (
+                <span className="ml-auto rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
+                  FF
+                </span>
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-white/[0.06] p-4">
+        <div className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2.5">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white uppercase">
+            {user?.username?.charAt(0) || 'V'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-slate-300 truncate">{user?.username || 'Unknown'}</p>
+            <p className="text-[10px] text-slate-500">{user?.role || 'user'}</p>
+          </div>
           <button
-            onClick={() => setSearchOpen(true)}
-            className="w-full flex items-center gap-2 rounded-lg bg-white/[0.03] border border-white/[0.06] px-3 py-2 text-sm text-slate-500 hover:bg-white/[0.05] hover:border-white/[0.1] transition-smooth"
+            onClick={handleLogout}
+            title="Sign out"
+            className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.05] hover:text-slate-300 transition-smooth"
           >
-            <Search className="h-4 w-4" />
-            <span className="flex-1 text-left text-xs">Search...</span>
-            <kbd className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-mono text-slate-400">Ctrl+K</kbd>
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
+      </div>
+    </>
+  )
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-0.5 px-3 py-2">
-          <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Platform</p>
-          {navigation.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-smooth',
-                  isActive
-                    ? 'bg-indigo-500/10 text-indigo-400 shadow-sm shadow-indigo-500/5'
-                    : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
-                )}
-              >
-                <item.icon className={cn('h-[18px] w-[18px]', isActive && 'text-indigo-400')} />
-                {item.name}
-                {item.name === 'Feature Flags' && (
-                  <span className="ml-auto rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
-                    FF
-                  </span>
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Footer */}
-        <div className="border-t border-white/[0.06] p-4">
-          <div className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2.5">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white uppercase">
-              {user?.username?.charAt(0) || 'V'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">{user?.username || 'Unknown'}</p>
-              <p className="text-[10px] text-slate-500">{user?.role || 'user'}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Sign out"
-              className="rounded-md p-1.5 text-slate-500 hover:bg-white/[0.05] hover:text-slate-300 transition-smooth"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/[0.06] bg-slate-950 px-4 md:hidden">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="rounded-md p-1.5 text-slate-400 hover:text-white transition-smooth"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600">
+            <Flag className="h-4 w-4 text-white" />
           </div>
+          <span className="text-sm font-bold text-white">Vexil</span>
         </div>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMobileOpen(false)}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+        </div>
+      )}
+
+      {/* Sidebar — hidden on mobile, visible on md+ */}
+      <aside className={cn(
+        'fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col border-r border-white/[0.06] bg-slate-950 transition-transform duration-200 ease-in-out md:static md:translate-x-0',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        {sidebarContent}
       </aside>
 
       {/* Command palette modal */}
@@ -153,7 +199,7 @@ export function Sidebar() {
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" onClick={closeSearch}>
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md rounded-xl border border-white/[0.08] bg-slate-900 shadow-2xl shadow-black/40"
+            className="relative mx-4 w-full max-w-md rounded-xl border border-white/[0.08] bg-slate-900 shadow-2xl shadow-black/40"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">

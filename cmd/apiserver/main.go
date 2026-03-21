@@ -7,6 +7,7 @@ import (
 	"flag"
 	"log/slog"
 	"os"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 	"k8s.io/client-go/rest"
@@ -30,8 +31,21 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
 
-	// Initialize store (in-memory for MVP, Postgres later)
-	st := store.NewMemoryStore()
+	// Initialize store
+	var st store.Store
+	databaseURL := os.Getenv("VEXIL_DATABASE_URL")
+	if databaseURL != "" {
+		pgStore, err := store.NewPostgresStore(databaseURL)
+		if err != nil {
+			logger.Error("failed to connect to database", "error", err)
+			os.Exit(1)
+		}
+		st = pgStore
+		logger.Info("using PostgreSQL store")
+	} else {
+		st = store.NewMemoryStore()
+		logger.Warn("no VEXIL_DATABASE_URL set, using in-memory store (data will not persist)")
+	}
 	defer st.Close()
 
 	// Create admin user
@@ -57,8 +71,16 @@ func main() {
 		PasswordHash: string(hash),
 		Role:         "admin",
 	}); err != nil {
-		logger.Error("failed to create admin user", "error", err)
-		os.Exit(1)
+		// If user already exists (pod restart with persistent DB), update password
+		if strings.Contains(err.Error(), "already exists") {
+			if updateErr := st.UpdatePassword(context.Background(), "admin", string(hash)); updateErr != nil {
+				logger.Error("failed to update admin password", "error", updateErr)
+				os.Exit(1)
+			}
+		} else {
+			logger.Error("failed to create admin user", "error", err)
+			os.Exit(1)
+		}
 	}
 
 	// Initialize multicluster manager

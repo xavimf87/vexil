@@ -11,19 +11,6 @@ data:
   password: {{ .Values.postgresql.auth.password | default "vexil-dev" | b64enc | quote }}
 ---
 apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "vexil.fullname" . }}-postgresql-init
-  namespace: {{ include "vexil.namespace" . }}
-  labels:
-    {{- include "vexil.labels" . | nindent 4 }}
-data:
-  {{- range $key, $val := .Values.postgresql.primary.initdb.scripts }}
-  {{ $key }}: |
-    {{- $val | nindent 4 }}
-  {{- end }}
----
-apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "vexil.fullname" . }}-postgresql
@@ -84,8 +71,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
-            - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
           livenessProbe:
             exec:
               command:
@@ -108,14 +93,11 @@ spec:
             failureThreshold: 6
           resources:
             {{- toYaml .Values.postgresql.primary.resources | nindent 12 }}
+      {{- if not .Values.postgresql.primary.persistence.enabled }}
       volumes:
-        - name: init-scripts
-          configMap:
-            name: {{ include "vexil.fullname" . }}-postgresql-init
-        {{- if not .Values.postgresql.primary.persistence.enabled }}
         - name: data
           emptyDir: {}
-        {{- end }}
+      {{- end }}
   {{- if .Values.postgresql.primary.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:

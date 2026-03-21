@@ -41,8 +41,8 @@ export default function AuditPage() {
         <p className="text-sm text-slate-400 mt-1">Track all changes across your platform</p>
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative w-full sm:flex-1 sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by resource..."
@@ -71,8 +71,8 @@ export default function AuditPage() {
           <p className="mt-2 text-sm text-slate-400">Actions will appear here as you manage your flags.</p>
         </div>
       ) : (
-        <div className="glass rounded-xl overflow-hidden">
-          <table className="w-full">
+        <div className="glass rounded-xl overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b border-white/[0.06]">
                 <th className="px-5 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Timestamp</th>
