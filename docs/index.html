@@ -88,6 +88,14 @@ layout: none
     }
     @keyframes dash { to { stroke-dashoffset: -100; } }
     .opacity-0-init { opacity: 0; }
+    @media (max-width: 639px) {
+      .hero-title { font-size: 2.25rem !important; line-height: 1.15 !important; }
+      .code-block pre { font-size: 0.65rem !important; padding: 0.75rem !important; line-height: 1.5 !important; }
+      .code-block .code-header { padding: 0.5rem 0.75rem !important; }
+      .hero-section { min-height: auto !important; padding-top: 5rem !important; padding-bottom: 3rem !important; }
+      .hero-subtitle { font-size: 0.95rem !important; }
+      .hero-buttons a { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
 
@@ -95,7 +103,7 @@ layout: none
 
 <!-- Nav -->
 <nav class="fixed top-0 w-full z-50 nav-blur bg-[#030712]/80 border-b border-white/[0.04]">
-  <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
     <a href="#" class="flex items-center gap-2.5">
       <div class="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20">
         <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21V3h4l4 4 4-4h4v18H3z"/></svg>
@@ -110,22 +118,35 @@ layout: none
       <a href="{{ site.baseurl }}/getting-started/" class="text-slate-400 hover:text-white transition">Docs</a>
     </div>
     <div class="flex items-center gap-3">
-      <a href="https://github.com/xavimf87/vexil" target="_blank" class="flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:text-white transition">
+      <a href="https://github.com/xavimf87/vexil" target="_blank" class="hidden sm:flex items-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:text-white transition">
         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
         GitHub
       </a>
+      <!-- Mobile menu button -->
+      <button onclick="document.getElementById('mobile-menu').classList.toggle('hidden')" class="md:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-white/[0.08] text-slate-300 hover:text-white hover:border-white/20 transition">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
     </div>
+  </div>
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-white/[0.04] bg-[#030712]/95 px-6 py-4 space-y-3">
+    <a href="#features" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block text-sm text-slate-400 hover:text-white transition py-1">Features</a>
+    <a href="#dashboard" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block text-sm text-slate-400 hover:text-white transition py-1">Dashboard</a>
+    <a href="#how-it-works" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block text-sm text-slate-400 hover:text-white transition py-1">How It Works</a>
+    <a href="#sdks" onclick="document.getElementById('mobile-menu').classList.add('hidden')" class="block text-sm text-slate-400 hover:text-white transition py-1">SDKs</a>
+    <a href="{{ site.baseurl }}/getting-started/" class="block text-sm text-slate-400 hover:text-white transition py-1">Docs</a>
+    <a href="https://github.com/xavimf87/vexil" target="_blank" class="block text-sm text-slate-400 hover:text-white transition py-1">GitHub</a>
   </div>
 </nav>
 
 <!-- Hero -->
-<section class="relative min-h-screen flex items-center justify-center hero-glow grid-bg pt-16">
+<section class="hero-section relative min-h-screen flex items-center justify-center hero-glow grid-bg pt-16">
   <!-- Floating orbs -->
   <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-600/10 rounded-full blur-[100px] animate-float"></div>
   <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/8 rounded-full blur-[120px] animate-float-delayed"></div>
   <div class="absolute top-1/3 right-1/3 w-48 h-48 bg-pink-600/5 rounded-full blur-[80px] animate-float-slow"></div>
 
-  <div class="relative max-w-5xl mx-auto px-6 text-center">
+  <div class="relative max-w-7xl mx-auto px-6 text-center">
     <div class="opacity-0-init animate-fade-up">
       <div class="inline-flex items-center gap-2 rounded-full border border-indigo-500/20 bg-indigo-500/5 px-4 py-1.5 text-xs font-medium text-indigo-400 mb-8">
         <span class="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse-slow"></span>
@@ -133,16 +154,16 @@ layout: none
       </div>
     </div>
 
-    <h1 class="opacity-0-init animate-fade-up text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] mb-6">
+    <h1 class="hero-title opacity-0-init animate-fade-up text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.1] mb-6">
       Feature flags that<br>
       <span class="gradient-text">live in your cluster</span>
     </h1>
 
-    <p class="opacity-0-init animate-fade-up-delay text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+    <p class="hero-subtitle opacity-0-init animate-fade-up-delay text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
       Define feature flags as CRDs. Deliver them via environment variables, ConfigMaps, or a real-time sidecar API. No external dependencies.
     </p>
 
-    <div class="opacity-0-init animate-fade-up-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+    <div class="hero-buttons opacity-0-init animate-fade-up-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4">
       <a href="{{ site.baseurl }}/getting-started/" class="group relative inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white cta-glow hover:bg-indigo-500 transition-all duration-300">
         Get Started
         <svg class="h-4 w-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
@@ -154,9 +175,9 @@ layout: none
     </div>
 
     <!-- Code preview -->
-    <div class="opacity-0-init animate-slide-in-right mt-16 max-w-2xl mx-auto text-left">
+    <div class="opacity-0-init animate-slide-in-right mt-16 max-w-3xl mx-auto text-left">
       <div class="code-block rounded-2xl border-glow overflow-hidden shadow-2xl shadow-indigo-500/5">
-        <div class="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
+        <div class="code-header flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
           <div class="flex gap-1.5">
             <div class="h-3 w-3 rounded-full bg-red-500/60"></div>
             <div class="h-3 w-3 rounded-full bg-yellow-500/60"></div>
@@ -179,8 +200,8 @@ layout: none
           <span class="text-slate-500">app:</span> <span class="text-purple-400">frontend</span></code></pre>
       </div>
 
-      <!-- kubectl output -->
-      <div class="code-block rounded-2xl border-glow overflow-hidden shadow-2xl shadow-indigo-500/5 mt-4">
+      <!-- kubectl output (hidden on mobile - too wide for small screens) -->
+      <div class="hidden sm:block code-block rounded-2xl border-glow overflow-hidden shadow-2xl shadow-indigo-500/5 mt-4">
         <div class="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
           <div class="flex gap-1.5">
             <div class="h-3 w-3 rounded-full bg-red-500/60"></div>
@@ -189,7 +210,7 @@ layout: none
           </div>
           <span class="text-xs text-slate-500 ml-2 font-mono">terminal</span>
         </div>
-        <pre class="p-5 text-sm leading-relaxed overflow-x-auto"><code><span class="text-slate-500">$</span> <span class="text-emerald-400">kubectl get ff -A</span>
+        <pre class="p-3 sm:p-5 text-[11px] sm:text-sm leading-relaxed overflow-x-auto"><code><span class="text-slate-500">$</span> <span class="text-emerald-400">kubectl get ff -A</span>
 <span class="text-slate-600">NAMESPACE   NAME                TYPE      DEFAULT   PHASE       TARGETED   AGE</span>
 <span class="text-slate-400">default     dark-mode           boolean   false     Active      3          2m</span>
 <span class="text-slate-400">default     api-rate-limit      integer   100       Active      1          5m</span>
@@ -202,11 +223,11 @@ layout: none
 </section>
 
 <!-- Features -->
-<section id="features" class="relative py-32">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="text-center mb-20">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Everything you need</h2>
-      <p class="text-lg text-slate-400 max-w-xl mx-auto">A complete platform for managing feature flags at scale across your Kubernetes infrastructure.</p>
+<section id="features" class="relative py-16 sm:py-32">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-10 sm:mb-20">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">Everything you need</h2>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">A complete platform for managing feature flags at scale across your Kubernetes infrastructure.</p>
     </div>
 
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -268,28 +289,28 @@ layout: none
 </section>
 
 <!-- Dashboard Preview -->
-<section id="dashboard" class="relative py-32 border-t border-white/[0.04]">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="text-center mb-16">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">A dashboard you'll actually use</h2>
-      <p class="text-lg text-slate-400 max-w-xl mx-auto">Manage flags, discover workloads, and browse audit logs from a modern web portal.</p>
+<section id="dashboard" class="relative py-16 sm:py-32 border-t border-white/[0.04]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-10 sm:mb-16">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">A dashboard you'll actually use</h2>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">Manage flags, discover workloads, and browse audit logs from a modern web portal.</p>
     </div>
 
     <!-- Browser mockup -->
-    <div class="relative max-w-5xl mx-auto">
+    <div class="relative max-w-6xl mx-auto overflow-x-auto">
       <!-- Glow behind -->
       <div class="absolute -inset-4 bg-indigo-600/5 rounded-3xl blur-2xl"></div>
 
-      <div class="relative rounded-2xl border border-white/[0.08] overflow-hidden shadow-2xl shadow-black/40">
+      <div class="relative rounded-2xl border border-white/[0.08] overflow-hidden shadow-2xl shadow-black/40 min-w-[600px]">
         <!-- Browser chrome -->
-        <div class="flex items-center gap-3 bg-[#0a0f1e] px-5 py-3 border-b border-white/[0.06]">
+        <div class="flex items-center gap-3 bg-[#0a0f1e] px-3 sm:px-5 py-3 border-b border-white/[0.06]">
           <div class="flex gap-1.5">
             <div class="h-3 w-3 rounded-full bg-red-500/60"></div>
             <div class="h-3 w-3 rounded-full bg-yellow-500/60"></div>
             <div class="h-3 w-3 rounded-full bg-green-500/60"></div>
           </div>
           <div class="flex-1 flex justify-center">
-            <div class="flex items-center gap-2 bg-white/[0.04] rounded-lg px-4 py-1.5 text-xs text-slate-500 w-80">
+            <div class="flex items-center gap-2 bg-white/[0.04] rounded-lg px-4 py-1.5 text-xs text-slate-500 max-w-80 w-full">
               <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               vexil.example.com
             </div>
@@ -298,8 +319,8 @@ layout: none
 
         <!-- Dashboard content -->
         <div class="flex bg-[#030712]" style="min-height: 420px;">
-          <!-- Sidebar -->
-          <div class="w-52 bg-[#0a0f1e] border-r border-white/[0.04] flex flex-col py-4 shrink-0">
+          <!-- Sidebar (hidden on mobile) -->
+          <div class="hidden sm:flex w-52 bg-[#0a0f1e] border-r border-white/[0.04] flex-col py-4 shrink-0">
             <div class="flex items-center gap-2.5 px-5 mb-6">
               <div class="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center">
                 <svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21V3h4l4 4 4-4h4v18H3z"/></svg>
@@ -332,7 +353,7 @@ layout: none
           </div>
 
           <!-- Main content -->
-          <div class="flex-1 p-6 overflow-hidden">
+          <div class="flex-1 p-3 sm:p-6 overflow-hidden">
             <!-- Header -->
             <div class="flex items-center justify-between mb-5">
               <div>
@@ -346,7 +367,8 @@ layout: none
             </div>
 
             <!-- Flags table -->
-            <div class="rounded-xl border border-white/[0.06] overflow-hidden">
+            <div class="rounded-xl border border-white/[0.06] overflow-x-auto">
+              <div class="min-w-[520px]">
               <!-- Table header -->
               <div class="grid grid-cols-[1fr_80px_80px_90px_80px] gap-4 bg-white/[0.02] px-4 py-2.5 border-b border-white/[0.06]">
                 <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Name</span>
@@ -410,6 +432,7 @@ layout: none
                 <span class="text-xs rounded-full bg-slate-500/10 text-slate-400 px-2.5 py-0.5 font-medium w-fit">Disabled</span>
                 <span class="text-xs text-slate-500">0 workloads</span>
               </div>
+              </div>
             </div>
           </div>
         </div>
@@ -419,11 +442,11 @@ layout: none
 </section>
 
 <!-- How it works -->
-<section id="how-it-works" class="relative py-32 border-t border-white/[0.04]">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="text-center mb-20">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">How it works</h2>
-      <p class="text-lg text-slate-400 max-w-xl mx-auto">Three components working together to deliver feature flags at the Kubernetes layer.</p>
+<section id="how-it-works" class="relative py-16 sm:py-32 border-t border-white/[0.04]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-10 sm:mb-20">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">How it works</h2>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">Three components working together to deliver feature flags at the Kubernetes layer.</p>
     </div>
 
     <div class="grid lg:grid-cols-3 gap-8">
@@ -492,20 +515,20 @@ os.<span class="text-amber-400">Getenv</span>(<span class="text-pink-400">"FEATU
 </section>
 
 <!-- SDKs -->
-<section id="sdks" class="relative py-32 border-t border-white/[0.04]">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="text-center mb-20">
-      <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Client SDKs</h2>
-      <p class="text-lg text-slate-400 max-w-xl mx-auto">Read flags from any language. Same API everywhere.</p>
+<section id="sdks" class="relative py-16 sm:py-32 border-t border-white/[0.04]">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="text-center mb-10 sm:mb-20">
+      <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">Client SDKs</h2>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">Read flags from any language. Same API everywhere.</p>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+    <div class="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
       <!-- Go -->
-      <div class="code-block rounded-2xl border-glow overflow-hidden">
+      <div class="code-block rounded-2xl border-glow overflow-hidden overflow-x-auto">
         <div class="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
           <span class="text-xs font-semibold text-cyan-400">Go</span>
         </div>
-        <pre class="p-5 text-sm"><code><span class="text-purple-400">client</span>, _ := vexil.<span class="text-amber-400">New</span>(
+        <pre class="p-5 text-sm overflow-x-auto"><code><span class="text-purple-400">client</span>, _ := vexil.<span class="text-amber-400">New</span>(
   vexil.<span class="text-emerald-400">WithSidecarProvider</span>(<span class="text-pink-400">"localhost:8514"</span>),
 )
 <span class="text-purple-400">dark</span> := client.<span class="text-amber-400">Bool</span>(<span class="text-pink-400">"dark-mode"</span>, <span class="text-indigo-400">false</span>)
@@ -517,7 +540,7 @@ os.<span class="text-amber-400">Getenv</span>(<span class="text-pink-400">"FEATU
         <div class="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
           <span class="text-xs font-semibold text-yellow-400">Python</span>
         </div>
-        <pre class="p-5 text-sm"><code><span class="text-purple-400">client</span> = <span class="text-amber-400">Client</span>(provider=<span class="text-pink-400">"env"</span>)
+        <pre class="p-5 text-sm overflow-x-auto"><code><span class="text-purple-400">client</span> = <span class="text-amber-400">Client</span>(provider=<span class="text-pink-400">"env"</span>)
 
 <span class="text-purple-400">dark</span> = client.<span class="text-amber-400">bool</span>(<span class="text-pink-400">"dark-mode"</span>, default=<span class="text-indigo-400">False</span>)
 <span class="text-purple-400">limit</span> = client.<span class="text-amber-400">int</span>(<span class="text-pink-400">"rate-limit"</span>, default=<span class="text-indigo-400">100</span>)</code></pre>
@@ -528,7 +551,7 @@ os.<span class="text-amber-400">Getenv</span>(<span class="text-pink-400">"FEATU
         <div class="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
           <span class="text-xs font-semibold text-emerald-400">Node.js</span>
         </div>
-        <pre class="p-5 text-sm"><code><span class="text-slate-500">const</span> <span class="text-purple-400">client</span> = <span class="text-slate-500">new</span> <span class="text-amber-400">Client</span>({ provider: <span class="text-pink-400">'env'</span> });
+        <pre class="p-5 text-sm overflow-x-auto"><code><span class="text-slate-500">const</span> <span class="text-purple-400">client</span> = <span class="text-slate-500">new</span> <span class="text-amber-400">Client</span>({ provider: <span class="text-pink-400">'env'</span> });
 
 <span class="text-slate-500">const</span> <span class="text-purple-400">dark</span> = <span class="text-slate-500">await</span> client.<span class="text-amber-400">bool</span>(<span class="text-pink-400">'dark-mode'</span>);
 <span class="text-slate-500">const</span> <span class="text-purple-400">limit</span> = <span class="text-slate-500">await</span> client.<span class="text-amber-400">int</span>(<span class="text-pink-400">'rate-limit'</span>, <span class="text-indigo-400">100</span>);</code></pre>
@@ -539,7 +562,7 @@ os.<span class="text-amber-400">Getenv</span>(<span class="text-pink-400">"FEATU
         <div class="flex items-center gap-2 px-5 py-3 border-b border-white/[0.06]">
           <span class="text-xs font-semibold text-violet-400">C# / .NET</span>
         </div>
-        <pre class="p-5 text-sm"><code><span class="text-slate-500">using var</span> <span class="text-purple-400">client</span> = <span class="text-slate-500">new</span> <span class="text-amber-400">VexilClient</span>(
+        <pre class="p-5 text-sm overflow-x-auto"><code><span class="text-slate-500">using var</span> <span class="text-purple-400">client</span> = <span class="text-slate-500">new</span> <span class="text-amber-400">VexilClient</span>(
   <span class="text-slate-500">new</span> <span class="text-emerald-400">EnvProvider</span>()
 );
 <span class="text-slate-500">var</span> <span class="text-purple-400">dark</span> = client.<span class="text-amber-400">Bool</span>(<span class="text-pink-400">"dark-mode"</span>);
@@ -550,9 +573,9 @@ os.<span class="text-amber-400">Getenv</span>(<span class="text-pink-400">"FEATU
 </section>
 
 <!-- CTA -->
-<section class="relative py-32 border-t border-white/[0.04]">
+<section class="relative py-16 sm:py-32 border-t border-white/[0.04]">
   <div class="absolute inset-0 hero-glow"></div>
-  <div class="relative max-w-3xl mx-auto px-6 text-center">
+  <div class="relative max-w-4xl mx-auto px-6 text-center">
     <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Ready to start?</h2>
     <p class="text-lg text-slate-400 mb-10">Deploy Vexil to your cluster in under 5 minutes.</p>
 
@@ -576,7 +599,7 @@ os.<span class="text-amber-400">Getenv</span>(<span class="text-pink-400">"FEATU
 
 <!-- Footer -->
 <footer class="border-t border-white/[0.04] py-12">
-  <div class="max-w-6xl mx-auto px-6">
+  <div class="max-w-7xl mx-auto px-6">
     <div class="flex flex-col md:flex-row items-center justify-between gap-6">
       <div class="flex items-center gap-2.5">
         <div class="h-7 w-7 rounded-lg bg-indigo-600/80 flex items-center justify-center">
