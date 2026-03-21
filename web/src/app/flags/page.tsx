@@ -34,7 +34,7 @@ export default function FlagsPage() {
     return flags.filter((f) => {
       if (search && !f.name.toLowerCase().includes(search.toLowerCase()) &&
           !f.description?.toLowerCase().includes(search.toLowerCase()) &&
-          !f.owner?.toLowerCase().includes(search.toLowerCase())) return false
+          !f.namespace?.toLowerCase().includes(search.toLowerCase())) return false
       if (filterType && f.type !== filterType) return false
       if (filterPhase && (f.phase || 'Pending') !== filterPhase) return false
       return true
@@ -81,7 +81,7 @@ export default function FlagsPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search flags by name, description or owner..."
+            placeholder="Search flags by name, description or namespace..."
             className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] pl-10 pr-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/40 transition-smooth"
           />
           {search && (
@@ -158,7 +158,6 @@ export default function FlagsPage() {
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Type</th>
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Value</th>
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Owner</th>
                   <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">Age</th>
                   <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">Actions</th>
                 </tr>
@@ -208,7 +207,6 @@ export default function FlagsPage() {
                         {flag.phase || 'Pending'}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-xs text-slate-500">{flag.owner || '-'}</td>
                     <td className="px-4 py-3.5 text-xs text-slate-500">{timeAgo(flag.createdAt)}</td>
                     <td className="px-4 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-smooth">

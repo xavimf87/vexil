@@ -15,7 +15,6 @@ export interface FeatureFlag {
   phase: FlagPhase
   disabled: boolean
   targetedWorkloads: number
-  owner?: string
   lifecycle: FlagLifecycle
   delivery?: DeliverySpec
   rules?: TargetingRule[]
@@ -73,6 +72,7 @@ export interface DiscoveredWorkload {
   replicas: number
   labels: Record<string, string>
   containers: ContainerInfo[]
+  matchingFlags?: string[]
 }
 
 export interface ContainerInfo {

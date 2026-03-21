@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -11,13 +12,14 @@ import (
 
 // DiscoveredWorkload represents a workload found in a Kubernetes cluster.
 type DiscoveredWorkload struct {
-	Cluster    string            `json:"cluster"`
-	Namespace  string            `json:"namespace"`
-	Name       string            `json:"name"`
-	Kind       string            `json:"kind"`
-	Replicas   int32             `json:"replicas"`
-	Labels     map[string]string `json:"labels"`
-	Containers []ContainerInfo   `json:"containers"`
+	Cluster       string            `json:"cluster"`
+	Namespace     string            `json:"namespace"`
+	Name          string            `json:"name"`
+	Kind          string            `json:"kind"`
+	Replicas      int32             `json:"replicas"`
+	Labels        map[string]string `json:"labels"`
+	Containers    []ContainerInfo   `json:"containers"`
+	MatchingFlags []string          `json:"matchingFlags,omitempty"`
 }
 
 // ContainerInfo contains details about a container in a workload.
@@ -55,15 +57,28 @@ type SecretRef struct {
 type Scanner struct {
 	client    client.Client
 	clusterID string
+	// vexilManagedCMs holds ConfigMap names managed by Vexil (label app.kubernetes.io/managed-by=vexil)
+	vexilManagedCMs map[string]bool
 }
 
 // NewScanner creates a new workload scanner.
 func NewScanner(c client.Client, clusterID string) *Scanner {
-	return &Scanner{client: c, clusterID: clusterID}
+	return &Scanner{
+		client:          c,
+		clusterID:       clusterID,
+		vexilManagedCMs: make(map[string]bool),
+	}
 }
 
 // ScanNamespace discovers all workloads in a namespace.
+// Only Vexil-related configuration (FLAG_* env vars, Vexil-managed ConfigMaps) is exposed.
 func (s *Scanner) ScanNamespace(ctx context.Context, namespace string) ([]DiscoveredWorkload, error) {
+	// Pre-fetch Vexil-managed ConfigMaps in this namespace
+	if err := s.loadVexilConfigMaps(ctx, namespace); err != nil {
+		// Non-fatal: just means we won't identify Vexil ConfigMap refs
+		s.vexilManagedCMs = make(map[string]bool)
+	}
+
 	var workloads []DiscoveredWorkload
 
 	// Scan Deployments
@@ -83,7 +98,7 @@ func (s *Scanner) ScanNamespace(ctx context.Context, namespace string) ([]Discov
 			Kind:       "Deployment",
 			Replicas:   replicas,
 			Labels:     d.Labels,
-			Containers: extractContainers(d.Spec.Template.Spec.Containers),
+			Containers: s.extractContainersSafe(d.Spec.Template.Spec.Containers),
 		})
 	}
 
@@ -104,7 +119,7 @@ func (s *Scanner) ScanNamespace(ctx context.Context, namespace string) ([]Discov
 			Kind:       "StatefulSet",
 			Replicas:   replicas,
 			Labels:     ss.Labels,
-			Containers: extractContainers(ss.Spec.Template.Spec.Containers),
+			Containers: s.extractContainersSafe(ss.Spec.Template.Spec.Containers),
 		})
 	}
 
@@ -121,7 +136,7 @@ func (s *Scanner) ScanNamespace(ctx context.Context, namespace string) ([]Discov
 			Kind:       "DaemonSet",
 			Replicas:   ds.Status.DesiredNumberScheduled,
 			Labels:     ds.Labels,
-			Containers: extractContainers(ds.Spec.Template.Spec.Containers),
+			Containers: s.extractContainersSafe(ds.Spec.Template.Spec.Containers),
 		})
 	}
 
@@ -130,28 +145,27 @@ func (s *Scanner) ScanNamespace(ctx context.Context, namespace string) ([]Discov
 
 // systemNamespaces are namespaces to skip during cluster-wide scans.
 var systemNamespaces = map[string]bool{
-	"kube-system":     true,
-	"kube-public":     true,
-	"kube-node-lease": true,
+	"kube-system":       true,
+	"kube-public":       true,
+	"kube-node-lease":   true,
 	"local-path-storage": true,
 }
 
-// ScanCluster discovers all workloads across user namespaces.
-// System namespaces (kube-system, kube-public, etc.) are excluded.
-func (s *Scanner) ScanCluster(ctx context.Context) ([]DiscoveredWorkload, error) {
-	var namespaces corev1.NamespaceList
-	if err := s.client.List(ctx, &namespaces); err != nil {
-		return nil, fmt.Errorf("listing namespaces: %w", err)
+// ScanCluster discovers workloads only in namespaces that have FeatureFlags.
+// If allowedNamespaces is non-empty, only those namespaces are scanned.
+// System namespaces are always excluded.
+func (s *Scanner) ScanCluster(ctx context.Context, allowedNamespaces []string) ([]DiscoveredWorkload, error) {
+	if len(allowedNamespaces) == 0 {
+		return []DiscoveredWorkload{}, nil
 	}
 
 	var allWorkloads []DiscoveredWorkload
-	for _, ns := range namespaces.Items {
-		if systemNamespaces[ns.Name] {
+	for _, ns := range allowedNamespaces {
+		if systemNamespaces[ns] {
 			continue
 		}
-		workloads, err := s.ScanNamespace(ctx, ns.Name)
+		workloads, err := s.ScanNamespace(ctx, ns)
 		if err != nil {
-			// Log but don't fail the whole scan for one namespace
 			continue
 		}
 		allWorkloads = append(allWorkloads, workloads...)
@@ -160,8 +174,26 @@ func (s *Scanner) ScanCluster(ctx context.Context) ([]DiscoveredWorkload, error)
 	return allWorkloads, nil
 }
 
-// extractContainers extracts container info from pod spec containers.
-func extractContainers(containers []corev1.Container) []ContainerInfo {
+// loadVexilConfigMaps fetches ConfigMaps managed by Vexil in a namespace.
+func (s *Scanner) loadVexilConfigMaps(ctx context.Context, namespace string) error {
+	var cmList corev1.ConfigMapList
+	if err := s.client.List(ctx, &cmList,
+		client.InNamespace(namespace),
+		client.MatchingLabels{"app.kubernetes.io/managed-by": "vexil"},
+	); err != nil {
+		return err
+	}
+	for _, cm := range cmList.Items {
+		s.vexilManagedCMs[cm.Name] = true
+	}
+	return nil
+}
+
+// extractContainersSafe extracts only Vexil-related config from containers.
+// - Only FLAG_* env vars are included
+// - Only Vexil-managed ConfigMap refs are included
+// - Secret names/keys are never exposed
+func (s *Scanner) extractContainersSafe(containers []corev1.Container) []ContainerInfo {
 	var infos []ContainerInfo
 
 	for _, c := range containers {
@@ -170,9 +202,17 @@ func extractContainers(containers []corev1.Container) []ContainerInfo {
 			Image: c.Image,
 		}
 
-		// Extract env vars
+		// Only expose FLAG_* env vars
 		for _, env := range c.Env {
-			ev := EnvVarInfo{Name: env.Name}
+			if !strings.HasPrefix(env.Name, "FLAG_") {
+				continue
+			}
+
+			ev := EnvVarInfo{
+				Name:   env.Name,
+				IsFlag: true,
+				FlagName: env.Name[5:],
+			}
 
 			if env.ValueFrom != nil {
 				if env.ValueFrom.ConfigMapKeyRef != nil {
@@ -182,38 +222,24 @@ func extractContainers(containers []corev1.Container) []ContainerInfo {
 						Key:  env.ValueFrom.ConfigMapKeyRef.Key,
 					})
 				} else if env.ValueFrom.SecretKeyRef != nil {
-					ev.Source = fmt.Sprintf("secret:%s/%s", env.ValueFrom.SecretKeyRef.Name, env.ValueFrom.SecretKeyRef.Key)
+					ev.Source = "secret"
 					ev.IsMasked = true
-					info.SecretRefs = append(info.SecretRefs, SecretRef{
-						Name: env.ValueFrom.SecretKeyRef.Name,
-						Key:  env.ValueFrom.SecretKeyRef.Key,
-					})
 				}
 			} else {
 				ev.Value = env.Value
 			}
 
-			// Check if managed by Vexil
-			if len(env.Name) > 5 && env.Name[:5] == "FLAG_" {
-				ev.IsFlag = true
-				ev.FlagName = env.Name[5:]
-			}
-
 			info.EnvVars = append(info.EnvVars, ev)
 		}
 
-		// Extract envFrom references
+		// Only expose Vexil-managed ConfigMap refs from envFrom
 		for _, envFrom := range c.EnvFrom {
-			if envFrom.ConfigMapRef != nil {
+			if envFrom.ConfigMapRef != nil && s.vexilManagedCMs[envFrom.ConfigMapRef.Name] {
 				info.ConfigMapRefs = append(info.ConfigMapRefs, ConfigMapRef{
 					Name: envFrom.ConfigMapRef.Name,
 				})
 			}
-			if envFrom.SecretRef != nil {
-				info.SecretRefs = append(info.SecretRefs, SecretRef{
-					Name: envFrom.SecretRef.Name,
-				})
-			}
+			// Secrets from envFrom are never exposed
 		}
 
 		infos = append(infos, info)

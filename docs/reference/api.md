@@ -156,7 +156,6 @@ Create a new feature flag. **Admin or editor.**
   "type": "boolean",
   "defaultValue": "false",
   "description": "Enable dark mode",
-  "owner": "frontend-team",
   "delivery": {
     "envVar": {
       "name": "FEATURE_DARK_MODE",

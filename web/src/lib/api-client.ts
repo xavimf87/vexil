@@ -71,7 +71,6 @@ export const flagsApi = {
     type: string
     defaultValue: string
     description?: string
-    owner?: string
     delivery?: FeatureFlag['delivery']
   }) => request<FeatureFlag>('/flags', { method: 'POST', body: JSON.stringify(data) }),
 

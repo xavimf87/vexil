@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { clustersApi, workloadsApi } from '@/lib/api-client'
 import { useState, useEffect } from 'react'
-import { Boxes, ChevronRight, Eye, EyeOff, Search, AlertCircle } from 'lucide-react'
+import { Boxes, ChevronRight, Search, AlertCircle, Flag } from 'lucide-react'
 import type { DiscoveredWorkload } from '@/lib/types'
 
 async function fetchNamespaces(clusterId: string): Promise<string[]> {
@@ -49,7 +49,7 @@ export default function WorkloadsPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">Workloads</h1>
-        <p className="text-sm text-slate-400 mt-1">Discover applications and their configuration</p>
+        <p className="text-sm text-slate-400 mt-1">Workloads in namespaces with feature flags</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -105,7 +105,7 @@ export default function WorkloadsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="glass rounded-xl p-12 text-center text-sm text-slate-500">
-          {search ? 'No workloads match your search' : 'No workloads found in this namespace'}
+          {search ? 'No workloads match your search' : 'No workloads found. Only namespaces with FeatureFlags are shown.'}
         </div>
       ) : (
         <div className="space-y-2">
@@ -122,12 +122,10 @@ export default function WorkloadsPage() {
 }
 
 function WorkloadCard({ workload, expanded, onToggle }: { workload: DiscoveredWorkload; expanded: boolean; onToggle: () => void }) {
-  const [showSecrets, setShowSecrets] = useState<Set<string>>(new Set())
   const containers = (workload.containers ?? []).map((c) => ({
     ...c,
     envVars: c.envVars ?? [],
     configMapRefs: c.configMapRefs ?? [],
-    secretRefs: c.secretRefs ?? [],
   }))
   const kindColor: Record<string, string> = {
     Deployment: 'bg-indigo-500/10 text-indigo-400',
@@ -145,12 +143,31 @@ function WorkloadCard({ workload, expanded, onToggle }: { workload: DiscoveredWo
           <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${kindColor[workload.kind] || 'bg-slate-500/10 text-slate-400'}`}>{workload.kind}</span>
         </div>
         <div className="flex items-center gap-4 text-xs text-slate-500">
+          {(workload.matchingFlags?.length ?? 0) > 0 && (
+            <span className="flex items-center gap-1 text-indigo-400">
+              <Flag className="h-3 w-3" />
+              {workload.matchingFlags!.length} flags
+            </span>
+          )}
           <span>{workload.replicas ?? 0} replicas</span>
           <span>{containers.length} containers</span>
         </div>
       </button>
       {expanded && (
         <div className="border-t border-white/[0.04] px-5 pb-5">
+          {(workload.matchingFlags?.length ?? 0) > 0 && (
+            <div className="mt-4 mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Matching Feature Flags</p>
+              <div className="flex flex-wrap gap-1.5">
+                {workload.matchingFlags!.map((flagName) => (
+                  <span key={flagName} className="flex items-center gap-1 rounded-md bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 text-xs font-mono text-indigo-400">
+                    <Flag className="h-3 w-3" />
+                    {flagName}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {containers.map((container) => (
             <div key={container.name} className="mt-4">
               <h4 className="text-xs font-semibold text-slate-300 mb-2">
@@ -159,28 +176,15 @@ function WorkloadCard({ workload, expanded, onToggle }: { workload: DiscoveredWo
               </h4>
               {container.envVars.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Environment Variables</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Feature Flag Variables</p>
                   <div className="rounded-lg border border-white/[0.04] divide-y divide-white/[0.04] text-xs">
                     {container.envVars.map((env) => (
                       <div key={env.name} className="flex items-center justify-between px-3 py-1.5">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-slate-300">{env.name}</span>
-                          {env.isFlag && <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-400">FLAG</span>}
+                          <span className="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[9px] font-bold text-indigo-400">FLAG</span>
                         </div>
-                        {env.isMasked ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-slate-500">{showSecrets.has(env.name) ? env.source : '********'}</span>
-                            <button onClick={() => {
-                              const next = new Set(showSecrets)
-                              next.has(env.name) ? next.delete(env.name) : next.add(env.name)
-                              setShowSecrets(next)
-                            }} className="text-slate-500 hover:text-slate-300">
-                              {showSecrets.has(env.name) ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="font-mono text-slate-400">{env.source || env.value || '(empty)'}</span>
-                        )}
+                        <span className="font-mono text-slate-400">{env.isMasked ? '(from secret)' : env.value || '(empty)'}</span>
                       </div>
                     ))}
                   </div>
@@ -188,22 +192,10 @@ function WorkloadCard({ workload, expanded, onToggle }: { workload: DiscoveredWo
               )}
               {container.configMapRefs.length > 0 && (
                 <div className="mb-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">ConfigMaps</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Vexil ConfigMaps</p>
                   <div className="flex flex-wrap gap-1.5">
                     {container.configMapRefs.map((ref) => (
                       <span key={`${ref.name}/${ref.key}`} className="rounded-md bg-slate-800/60 px-2 py-0.5 text-xs font-mono text-slate-400">
-                        {ref.name}{ref.key ? `/${ref.key}` : ''}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {container.secretRefs.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Secrets</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {container.secretRefs.map((ref) => (
-                      <span key={`${ref.name}/${ref.key}`} className="rounded-md bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 text-xs font-mono text-amber-400/80">
                         {ref.name}{ref.key ? `/${ref.key}` : ''}
                       </span>
                     ))}

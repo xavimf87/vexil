@@ -21,7 +21,6 @@ spec:
   description: "Enable dark mode for the frontend"
   type: boolean
   defaultValue: "false"
-  owner: "frontend-team"
   delivery:
     envVar:
       name: FEATURE_DARK_MODE
@@ -43,7 +42,6 @@ spec:
   description: "Enable dark mode for the frontend"
   type: boolean
   defaultValue: "false"
-  owner: "frontend-team"
   delivery:
     envVar:
       name: FEATURE_DARK_MODE

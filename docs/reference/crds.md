@@ -22,7 +22,6 @@ Vexil defines two Custom Resource Definitions.
 | `type` | string | Yes | Flag data type: `boolean`, `string`, `integer`, `json` |
 | `defaultValue` | string | Yes | Default value when no targeting rules match |
 | `description` | string | No | Human-readable description |
-| `owner` | string | No | Team or person responsible |
 | `disabled` | bool | No | Kill switch that disables the flag globally |
 | `lifecycle` | string | No | `active` (default), `deprecated`, `archived` |
 | `rules` | []TargetingRule | No | Targeting rules evaluated in order |

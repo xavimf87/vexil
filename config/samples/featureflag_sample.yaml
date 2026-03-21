@@ -7,7 +7,6 @@ spec:
   description: "Enable dark mode for the frontend application"
   type: boolean
   defaultValue: "false"
-  owner: "frontend-team"
   delivery:
     envVar:
       name: FEATURE_DARK_MODE
@@ -24,7 +23,6 @@ spec:
   description: "API rate limit per user per minute"
   type: integer
   defaultValue: "100"
-  owner: "platform-team"
   delivery:
     configMap:
       configMapName: vexil-flags
@@ -55,7 +53,6 @@ spec:
   description: "New checkout flow with improved UX"
   type: boolean
   defaultValue: "false"
-  owner: "product-team"
   delivery:
     envVar:
       selector:

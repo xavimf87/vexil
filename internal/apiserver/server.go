@@ -86,10 +86,10 @@ func (s *Server) Run(ctx context.Context) error {
 	mux.HandleFunc("GET /api/v1/clusters/{id}", clusterHandler.Get)
 	mux.Handle("DELETE /api/v1/clusters/{id}", withRoles(adminOnly, clusterHandler.Remove))
 
-	// Workloads
-	mux.HandleFunc("GET /api/v1/clusters/{id}/namespaces", workloadHandler.ListNamespaces)
-	mux.HandleFunc("GET /api/v1/clusters/{id}/workloads", workloadHandler.List)
-	mux.HandleFunc("GET /api/v1/clusters/{id}/workloads/{namespace}/{name}", workloadHandler.Get)
+	// Workloads (editor+ only)
+	mux.Handle("GET /api/v1/clusters/{id}/namespaces", withRoles(editorUp, workloadHandler.ListNamespaces))
+	mux.Handle("GET /api/v1/clusters/{id}/workloads", withRoles(editorUp, workloadHandler.List))
+	mux.Handle("GET /api/v1/clusters/{id}/workloads/{namespace}/{name}", withRoles(editorUp, workloadHandler.Get))
 
 	// Audit
 	mux.HandleFunc("GET /api/v1/audit", auditHandler.List)

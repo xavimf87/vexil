@@ -63,8 +63,6 @@ spec:
                   type: string
                 disabled:
                   type: boolean
-                owner:
-                  type: string
                 lifecycle:
                   type: string
                   default: active

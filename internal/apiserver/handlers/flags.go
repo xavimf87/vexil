@@ -34,7 +34,6 @@ type CreateFlagRequest struct {
 	Type         vexilv1alpha1.FlagType          `json:"type"`
 	DefaultValue string                         `json:"defaultValue"`
 	Delivery     *vexilv1alpha1.DeliverySpec     `json:"delivery,omitempty"`
-	Owner        string                         `json:"owner,omitempty"`
 }
 
 // FlagResponse is the API response for a feature flag.
@@ -49,7 +48,6 @@ type FlagResponse struct {
 	Phase             vexilv1alpha1.FlagPhase         `json:"phase"`
 	Disabled          bool                           `json:"disabled"`
 	TargetedWorkloads int32                          `json:"targetedWorkloads"`
-	Owner             string                         `json:"owner,omitempty"`
 	Lifecycle         vexilv1alpha1.FlagLifecycle     `json:"lifecycle"`
 	Delivery          *vexilv1alpha1.DeliverySpec     `json:"delivery,omitempty"`
 	Rules             []vexilv1alpha1.TargetingRule   `json:"rules,omitempty"`
@@ -123,7 +121,6 @@ func (h *FlagHandler) Create(w http.ResponseWriter, r *http.Request) {
 			Type:         req.Type,
 			DefaultValue: req.DefaultValue,
 			Delivery:     req.Delivery,
-			Owner:        req.Owner,
 			Lifecycle:    vexilv1alpha1.FlagLifecycleActive,
 		},
 	}
@@ -201,7 +198,6 @@ func (h *FlagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Disabled     *bool                          `json:"disabled,omitempty"`
 		Delivery     *vexilv1alpha1.DeliverySpec     `json:"delivery,omitempty"`
 		Rules        []vexilv1alpha1.TargetingRule   `json:"rules,omitempty"`
-		Owner        *string                        `json:"owner,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
@@ -222,9 +218,6 @@ func (h *FlagHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	if updates.Rules != nil {
 		flag.Spec.Rules = updates.Rules
-	}
-	if updates.Owner != nil {
-		flag.Spec.Owner = *updates.Owner
 	}
 
 	if err := k8sClient.Update(ctx, &flag); err != nil {
@@ -344,7 +337,6 @@ func flagToResponse(f vexilv1alpha1.FeatureFlag, clusterID string) FlagResponse 
 		Phase:             f.Status.Phase,
 		Disabled:          f.Spec.Disabled,
 		TargetedWorkloads: f.Status.TargetedWorkloads,
-		Owner:             f.Spec.Owner,
 		Lifecycle:         f.Spec.Lifecycle,
 		Delivery:          f.Spec.Delivery,
 		Rules:             f.Spec.Rules,

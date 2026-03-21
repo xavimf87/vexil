@@ -193,7 +193,6 @@ spec:
   description: "Enable dark mode for the frontend"
   type: boolean          # boolean | string | integer | json
   defaultValue: "false"
-  owner: "frontend-team"
   delivery:
     envVar:
       name: FEATURE_DARK_MODE

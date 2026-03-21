@@ -83,10 +83,6 @@ type FeatureFlagSpec struct {
 	// +optional
 	Disabled bool `json:"disabled,omitempty"`
 
-	// Owner is the team or person responsible for this flag.
-	// +optional
-	Owner string `json:"owner,omitempty"`
-
 	// Lifecycle is the current lifecycle stage of the flag.
 	// +kubebuilder:default=active
 	// +optional
