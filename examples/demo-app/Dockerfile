@@ -1,11 +1,15 @@
-FROM golang:1.25-alpine AS builder
-WORKDIR /app
-RUN go mod init demo-app
-COPY main.go .
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /demo-app .
+FROM python:3.13-slim
 
-FROM gcr.io/distroless/static:nonroot
-COPY --from=builder /demo-app /demo-app
-USER 65532:65532
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+
+RUN useradd -r -u 1001 demo
+USER 1001
+
 EXPOSE 8080
-ENTRYPOINT ["/demo-app"]
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--access-logfile", "-", "app:app"]

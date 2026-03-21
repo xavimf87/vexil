@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -16,41 +16,19 @@ import (
 
 const tokenExpiry = 24 * time.Hour
 
-type session struct {
-	Username  string
-	Role      string
-	ExpiresAt time.Time
-}
-
 // AuthHandler handles authentication API requests.
 type AuthHandler struct {
-	store    store.Store
-	mu       sync.RWMutex
-	sessions map[string]session
+	store store.Store
 }
 
 // NewAuthHandler creates a new AuthHandler.
 func NewAuthHandler(st store.Store) *AuthHandler {
-	return &AuthHandler{
-		store:    st,
-		sessions: make(map[string]session),
-	}
+	return &AuthHandler{store: st}
 }
 
 // ValidateToken checks if a token is valid and returns the username and role.
-// This implements the TokenValidator interface used by the auth middleware.
 func (h *AuthHandler) ValidateToken(token string) (username string, role string, ok bool) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	sess, exists := h.sessions[token]
-	if !exists {
-		return "", "", false
-	}
-	if time.Now().After(sess.ExpiresAt) {
-		return "", "", false
-	}
-	return sess.Username, sess.Role, true
+	return h.store.GetSession(context.Background(), token)
 }
 
 type loginRequest struct {
@@ -98,13 +76,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.mu.Lock()
-	h.sessions[token] = session{
-		Username:  user.Username,
-		Role:      user.Role,
-		ExpiresAt: time.Now().Add(tokenExpiry),
+	if err := h.store.CreateSession(r.Context(), token, user.Username, user.Role, time.Now().Add(tokenExpiry)); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create session")
+		return
 	}
-	h.mu.Unlock()
 
 	writeJSON(w, http.StatusOK, loginResponse{
 		Token: token,
@@ -120,10 +95,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.mu.Lock()
-	delete(h.sessions, token)
-	h.mu.Unlock()
-
+	h.store.DeleteSession(r.Context(), token)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
 }
 
@@ -135,7 +107,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username, role, ok := h.ValidateToken(token)
+	username, role, ok := h.store.GetSession(r.Context(), token)
 	if !ok {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
@@ -225,7 +197,6 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	isAdmin := currentRole == "admin"
 	isSelf := currentUsername == targetUsername
 
-	// Non-admins can only update their own password
 	if !isAdmin {
 		if !isSelf {
 			writeError(w, http.StatusForbidden, "you can only update your own account")

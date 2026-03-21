@@ -1,20 +1,30 @@
----
+# ─────────────────────────────────────────────────────────────
+# Demo workloads — two deployments with different labels so
+# targeting rules produce different flag values for each.
+# ─────────────────────────────────────────────────────────────
+
+# Deployment 1: "premium" tier frontend
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: demo-app
+  name: demo-frontend
   namespace: default
   labels:
     app: demo
+    component: frontend
+    tier: premium
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: demo
+      component: frontend
   template:
     metadata:
       labels:
         app: demo
+        component: frontend
+        tier: premium
     spec:
       containers:
         - name: app
@@ -43,21 +53,95 @@ spec:
             name: vexil-flags
             optional: true
 ---
+# Deployment 2: "free" tier API backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-api
+  namespace: default
+  labels:
+    app: demo
+    component: api
+    tier: free
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+      component: api
+  template:
+    metadata:
+      labels:
+        app: demo
+        component: api
+        tier: free
+    spec:
+      containers:
+        - name: app
+          image: vexil-demo:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: VEXIL_CONFIG_PATH
+              value: "/etc/vexil"
+          volumeMounts:
+            - name: flags
+              mountPath: /etc/vexil
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+      volumes:
+        - name: flags
+          configMap:
+            name: vexil-flags
+            optional: true
+---
+# Services
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo-app
+  name: demo-frontend
   namespace: default
 spec:
   type: NodePort
   ports:
     - port: 8080
       targetPort: 8080
-      protocol: TCP
+      nodePort: 30080
   selector:
     app: demo
+    component: frontend
 ---
-# Feature flags targeting the demo app
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-api
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30081
+  selector:
+    app: demo
+    component: api
+
+# ─────────────────────────────────────────────────────────────
+# Feature Flags — all types, with targeting rules
+# ─────────────────────────────────────────────────────────────
+
+---
+# ── Boolean flag ─────────────────────────────────────────────
+# Simple on/off toggle delivered as env var.
+# Rule: enable only for frontend component.
 apiVersion: vexil.io/v1alpha1
 kind: FeatureFlag
 metadata:
@@ -73,14 +157,27 @@ spec:
       selector:
         matchLabels:
           app: demo
+  rules:
+    - name: frontend-only
+      conditions:
+        - attribute: "label:component"
+          operator: eq
+          values: ["frontend"]
+      value: "true"
+    # api pods get the default: false
+
 ---
+# ── Integer flag with multiple rules ────────────────────────
+# Different rate limits per tier. Demonstrates:
+# - "equals" operator for exact match
+# - Multiple rules evaluated top-to-bottom (first match wins)
 apiVersion: vexil.io/v1alpha1
 kind: FeatureFlag
 metadata:
   name: api-rate-limit
   namespace: default
 spec:
-  description: "API rate limit per user per minute"
+  description: "Max API requests per minute"
   type: integer
   defaultValue: "100"
   delivery:
@@ -90,29 +187,33 @@ spec:
       selector:
         matchLabels:
           app: demo
+  rules:
+    - name: premium-tier
+      conditions:
+        - attribute: "label:tier"
+          operator: eq
+          values: ["premium"]
+      value: "5000"
+    - name: free-tier
+      conditions:
+        - attribute: "label:tier"
+          operator: eq
+          values: ["free"]
+      value: "50"
+    # anything else gets default: 100
+
 ---
-apiVersion: vexil.io/v1alpha1
-kind: FeatureFlag
-metadata:
-  name: new-checkout
-  namespace: default
-spec:
-  description: "New checkout flow"
-  type: boolean
-  defaultValue: "false"
-  delivery:
-    envVar:
-      selector:
-        matchLabels:
-          app: demo
----
+# ── String flag ──────────────────────────────────────────────
+# Banner text varies by component. Demonstrates:
+# - "is one of" (in) operator with multiple values
+# - ConfigMap delivery
 apiVersion: vexil.io/v1alpha1
 kind: FeatureFlag
 metadata:
   name: banner-text
   namespace: default
 spec:
-  description: "Promotional banner text"
+  description: "Promotional banner shown at the top of the page"
   type: string
   defaultValue: "Welcome to Vexil!"
   delivery:
@@ -122,3 +223,146 @@ spec:
       selector:
         matchLabels:
           app: demo
+  rules:
+    - name: premium-welcome
+      conditions:
+        - attribute: "label:tier"
+          operator: in
+          values: ["premium", "enterprise"]
+      value: "Welcome back, Premium user!"
+    - name: api-docs
+      conditions:
+        - attribute: "label:component"
+          operator: eq
+          values: ["api"]
+      value: "API v2 now available — check /api/v2/docs"
+
+---
+# ── JSON flag ────────────────────────────────────────────────
+# Complex config object. Demonstrates:
+# - JSON type with structured data
+# - Multiple conditions (AND logic) in a single rule
+# - "not equals" (neq) operator
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: ui-config
+  namespace: default
+spec:
+  description: "UI layout and theme configuration"
+  type: json
+  defaultValue: '{"theme":"light","sidebar":true,"animations":false,"maxItems":10}'
+  delivery:
+    envVar:
+      name: FLAG_UI_CONFIG
+      selector:
+        matchLabels:
+          app: demo
+  rules:
+    - name: premium-frontend-config
+      conditions:
+        - attribute: "label:component"
+          operator: eq
+          values: ["frontend"]
+        - attribute: "label:tier"
+          operator: neq
+          values: ["free"]
+      value: '{"theme":"dark","sidebar":true,"animations":true,"maxItems":50}'
+    - name: api-minimal-config
+      conditions:
+        - attribute: "label:component"
+          operator: eq
+          values: ["api"]
+      value: '{"theme":"none","sidebar":false,"animations":false,"maxItems":100}'
+
+---
+# ── Boolean flag with canary rollout ─────────────────────────
+# Gradual rollout of a new checkout flow. Demonstrates:
+# - Progressive rollout strategy
+# - Env var delivery with auto-generated name (FLAG_NEW_CHECKOUT)
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: new-checkout
+  namespace: default
+spec:
+  description: "New checkout flow with improved UX"
+  type: boolean
+  defaultValue: "false"
+  delivery:
+    envVar:
+      selector:
+        matchLabels:
+          app: demo
+          component: frontend
+  rollout:
+    strategy: canary
+    steps:
+      - percentage: 10
+        duration: "5m"
+      - percentage: 50
+        duration: "10m"
+      - percentage: 100
+        duration: "0s"
+
+---
+# ── Integer flag with "not in" operator ──────────────────────
+# Max upload size. Demonstrates:
+# - "notin" operator (exclude specific values)
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: max-upload-mb
+  namespace: default
+spec:
+  description: "Maximum file upload size in MB"
+  type: integer
+  defaultValue: "10"
+  delivery:
+    envVar:
+      name: FLAG_MAX_UPLOAD_MB
+      selector:
+        matchLabels:
+          app: demo
+  rules:
+    - name: large-uploads-except-free
+      conditions:
+        - attribute: "label:tier"
+          operator: notin
+          values: ["free", "trial"]
+      value: "500"
+    # free and trial tiers get default: 10
+
+---
+# ── String flag with regex matching ──────────────────────────
+# Log level. Demonstrates:
+# - "matches" operator (regex)
+# - Matching on workload-name
+apiVersion: vexil.io/v1alpha1
+kind: FeatureFlag
+metadata:
+  name: log-level
+  namespace: default
+spec:
+  description: "Application log verbosity"
+  type: string
+  defaultValue: "info"
+  delivery:
+    envVar:
+      name: FLAG_LOG_LEVEL
+      selector:
+        matchLabels:
+          app: demo
+  rules:
+    - name: debug-for-api
+      conditions:
+        - attribute: workload-name
+          operator: matches
+          values: [".*-api$"]
+      value: "debug"
+    - name: warn-for-frontend
+      conditions:
+        - attribute: "label:component"
+          operator: eq
+          values: ["frontend"]
+      value: "warn"

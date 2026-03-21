@@ -64,6 +64,15 @@ type Store interface {
 	// UpdateUserRole updates a user's role.
 	UpdateUserRole(ctx context.Context, username string, role string) error
 
+	// CreateSession stores a new session token.
+	CreateSession(ctx context.Context, token string, username string, role string, expiresAt time.Time) error
+
+	// GetSession returns the username and role for a valid (non-expired) session.
+	GetSession(ctx context.Context, token string) (username string, role string, ok bool)
+
+	// DeleteSession removes a session token.
+	DeleteSession(ctx context.Context, token string) error
+
 	// Close closes the store connection.
 	Close() error
 }

@@ -242,6 +242,32 @@ func (s *PostgresStore) UpdateUserRole(ctx context.Context, username string, rol
 	return checkRowAffected(res, username)
 }
 
+func (s *PostgresStore) CreateSession(ctx context.Context, token string, username string, role string, expiresAt time.Time) error {
+	_, err := s.db.ExecContext(ctx,
+		`INSERT INTO sessions (token, username, role, expires_at) VALUES ($1, $2, $3, $4)
+		 ON CONFLICT (token) DO UPDATE SET username = $2, role = $3, expires_at = $4`,
+		token, username, role, expiresAt,
+	)
+	return err
+}
+
+func (s *PostgresStore) GetSession(ctx context.Context, token string) (string, string, bool) {
+	var username, role string
+	err := s.db.QueryRowContext(ctx,
+		`SELECT username, role FROM sessions WHERE token = $1 AND expires_at > NOW()`,
+		token,
+	).Scan(&username, &role)
+	if err != nil {
+		return "", "", false
+	}
+	return username, role, true
+}
+
+func (s *PostgresStore) DeleteSession(ctx context.Context, token string) error {
+	_, err := s.db.ExecContext(ctx, `DELETE FROM sessions WHERE token = $1`, token)
+	return err
+}
+
 func (s *PostgresStore) Close() error {
 	return s.db.Close()
 }

@@ -10,18 +10,26 @@ import (
 	"github.com/google/uuid"
 )
 
+type memSession struct {
+	Username  string
+	Role      string
+	ExpiresAt time.Time
+}
+
 // MemoryStore is an in-memory implementation of Store for development.
 type MemoryStore struct {
-	mu     sync.RWMutex
-	events []AuditEvent
-	users  map[string]User
+	mu       sync.RWMutex
+	events   []AuditEvent
+	users    map[string]User
+	sessions map[string]memSession
 }
 
 // NewMemoryStore creates a new in-memory store.
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		events: make([]AuditEvent, 0),
-		users:  make(map[string]User),
+		events:   make([]AuditEvent, 0),
+		users:    make(map[string]User),
+		sessions: make(map[string]memSession),
 	}
 }
 
@@ -152,6 +160,30 @@ func (s *MemoryStore) UpdateUserRole(_ context.Context, username string, role st
 	}
 	user.Role = role
 	s.users[username] = user
+	return nil
+}
+
+func (s *MemoryStore) CreateSession(_ context.Context, token string, username string, role string, expiresAt time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sessions[token] = memSession{Username: username, Role: role, ExpiresAt: expiresAt}
+	return nil
+}
+
+func (s *MemoryStore) GetSession(_ context.Context, token string) (string, string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	sess, ok := s.sessions[token]
+	if !ok || time.Now().After(sess.ExpiresAt) {
+		return "", "", false
+	}
+	return sess.Username, sess.Role, true
+}
+
+func (s *MemoryStore) DeleteSession(_ context.Context, token string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.sessions, token)
 	return nil
 }
 
